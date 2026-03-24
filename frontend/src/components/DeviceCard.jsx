@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { deviceService } from '../services/api';
-import { Power, ShieldAlert, Battery, Wifi, Activity, Settings2 } from 'lucide-react';
+import { Power, ShieldAlert, Battery, Wifi, Activity, Settings2, RefreshCcw, Wrench } from 'lucide-react';
 
 const DeviceCard = ({ device, onUpdate }) => {
   const [hb, setHb] = useState(device.hb_interval);
@@ -18,8 +18,8 @@ const DeviceCard = ({ device, onUpdate }) => {
     }
   };
 
-  const updateInterval = async () => {
-    await deviceService.updateConfig(device.imei, { hb_interval: parseInt(hb) });
+  const updateConfig = async (payload) => {
+    await deviceService.updateConfig(device.imei, payload);
     onUpdate();
   };
 
@@ -47,12 +47,17 @@ const DeviceCard = ({ device, onUpdate }) => {
           </div>
           <h4 className="font-mono text-lg font-bold text-slate-900 tracking-tight">{device.imei}</h4>
         </div>
-        <div className="bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-slate-200">
-          {device.valve_type === 0 ? 'Chint' : 'H-Bridge'}
-        </div>
+        <select
+          value={device.valve_type}
+          onChange={(e) => updateConfig({ valve_type: parseInt(e.target.value) })}
+          className="bg-slate-50 text-slate-600 text-[11px] font-bold uppercase tracking-wider px-2 py-1.5 rounded-lg border border-slate-200 outline-none focus:border-blue-500 cursor-pointer"
+        >
+          <option value={0}>CHINT</option>
+          <option value={1}>H-BRIDGE</option>
+        </select>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-8">
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="metric-box">
           <Battery size={16} className="text-slate-400 mb-1.5" />
           <p className="font-mono font-bold text-slate-700 text-sm">{device.battery || '0.0'} V</p>
@@ -75,45 +80,35 @@ const DeviceCard = ({ device, onUpdate }) => {
         </div>
       </div>
 
-      <div className="flex gap-3 mb-6 mt-auto">
-        <button
-          onClick={() => handleCommand('OPEN')}
-          disabled={loadingCmd !== ''}
-          className="flex-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white border border-emerald-200 hover:border-emerald-500 py-2.5 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2 active:scale-95"
-        >
-          {loadingCmd === 'OPEN' && <Power size={14} className="animate-pulse" />} ОТКРЫТЬ
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => handleCommand('OPEN')} disabled={loadingCmd !== ''} className="flex-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white border border-emerald-200 hover:border-emerald-500 py-2.5 rounded-xl text-xs font-bold transition-all flex justify-center items-center gap-1.5 active:scale-95">
+          {loadingCmd === 'OPEN' ? <Activity size={14} className="animate-pulse" /> : <Power size={14} />} ОТКРЫТЬ
         </button>
-        <button
-          onClick={() => handleCommand('CLOSE')}
-          disabled={loadingCmd !== ''}
-          className="flex-1 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-200 hover:border-rose-500 py-2.5 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2 active:scale-95"
-        >
-          {loadingCmd === 'CLOSE' && <Power size={14} className="animate-pulse" />} ЗАКРЫТЬ
+        <button onClick={() => handleCommand('CLOSE')} disabled={loadingCmd !== ''} className="flex-1 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-200 hover:border-rose-500 py-2.5 rounded-xl text-xs font-bold transition-all flex justify-center items-center gap-1.5 active:scale-95">
+          {loadingCmd === 'CLOSE' ? <Activity size={14} className="animate-pulse" /> : <Power size={14} />} ЗАКРЫТЬ
         </button>
       </div>
 
-      <div className="pt-5 border-t border-slate-100/80 space-y-3">
+      <div className="flex gap-2 mb-6">
+        <button onClick={() => handleCommand('STATUS')} disabled={loadingCmd !== ''} className="flex-1 bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 py-2 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-all flex justify-center items-center gap-1.5">
+          <RefreshCcw size={12} className={loadingCmd === 'STATUS' ? 'animate-spin' : ''} /> Опрос
+        </button>
+        <button onClick={() => handleCommand('SERVICE')} disabled={loadingCmd !== ''} className="flex-1 bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 py-2 rounded-lg text-[10px] font-bold tracking-widest uppercase transition-all flex justify-center items-center gap-1.5">
+          <Wrench size={12} className={loadingCmd === 'SERVICE' ? 'animate-pulse' : ''} /> Сервис
+        </button>
+      </div>
+
+      <div className="pt-5 border-t border-slate-100/80 space-y-3 mt-auto">
         <div className="flex gap-2">
           <div className="relative flex-1 flex items-center">
             <Settings2 size={14} className="absolute left-3 text-slate-400" />
-            <input
-              type="number"
-              value={hb}
-              onChange={(e) => setHb(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm font-mono font-medium outline-none focus:border-blue-500 focus:bg-white transition-colors"
-            />
+            <input type="number" value={hb} onChange={(e) => setHb(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm font-mono font-medium outline-none focus:border-blue-500 focus:bg-white transition-colors" />
           </div>
-          <button
-            onClick={updateInterval}
-            className="px-4 text-xs bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors"
-          >
+          <button onClick={() => updateConfig({ hb_interval: parseInt(hb) })} className="px-4 text-xs bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors">
             Интервал
           </button>
         </div>
-        <button
-          onClick={resetKey}
-          className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-500 hover:text-rose-600 bg-transparent hover:bg-rose-50 py-2.5 rounded-lg transition-colors group-hover:opacity-100 opacity-50"
-        >
+        <button onClick={resetKey} className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-500 hover:text-rose-600 bg-transparent hover:bg-rose-50 py-2.5 rounded-lg transition-colors group-hover:opacity-100 opacity-50">
           <ShieldAlert size={14} /> Сброс ключей устройства
         </button>
       </div>

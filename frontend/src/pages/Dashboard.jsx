@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { subscriberService } from '../services/api';
 import DeviceCard from '../components/DeviceCard';
 import BalanceModal from '../components/BalanceModal';
-import { Search, MapPin, CreditCard } from 'lucide-react';
+import SubscriberModal from '../components/SubscriberModal';
+import DeviceModal from '../components/DeviceModal';
+import { Search, MapPin, CreditCard, Plus } from 'lucide-react';
 
 const Dashboard = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [selectedSub, setSelectedSub] = useState(null);
+  const [createSubModal, setCreateSubModal] = useState(false);
+  const [addDeviceTo, setAddDeviceTo] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async (e) => {
@@ -27,21 +31,26 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="glass-panel rounded-2xl p-2.5">
-        <form onSubmit={handleSearch} className="flex gap-2 relative">
-          <div className="flex-1 relative flex items-center">
-            <Search className="absolute left-5 text-slate-400" size={22} />
-            <input
-              className="w-full pl-14 pr-6 py-4 bg-transparent border-none outline-none font-medium text-slate-700 text-lg placeholder:text-slate-400"
-              placeholder="Введите лицевой счет, ФИО или адрес..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <button type="submit" disabled={loading} className="btn-primary min-w-[160px] text-lg">
-            {loading ? 'Поиск...' : 'Найти'}
-          </button>
-        </form>
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="glass-panel rounded-2xl p-2.5 flex-1">
+          <form onSubmit={handleSearch} className="flex gap-2 relative">
+            <div className="flex-1 relative flex items-center">
+              <Search className="absolute left-5 text-slate-400" size={22} />
+              <input
+                className="w-full pl-14 pr-6 py-4 bg-transparent border-none outline-none font-medium text-slate-700 text-lg placeholder:text-slate-400"
+                placeholder="Поиск по счету, имени или адресу..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <button type="submit" disabled={loading} className="btn-primary min-w-[140px] text-lg">
+              {loading ? 'Поиск...' : 'Найти'}
+            </button>
+          </form>
+        </div>
+        <button onClick={() => setCreateSubModal(true)} className="bg-slate-900 text-white font-bold px-8 py-4 rounded-2xl shadow-soft hover:bg-slate-800 transition-all active:scale-[0.98] flex items-center gap-2 whitespace-nowrap">
+          <Plus size={20} /> Новый абонент
+        </button>
       </div>
 
       <div className="space-y-6">
@@ -74,7 +83,13 @@ const Dashboard = () => {
             </div>
 
             <div className="p-8 bg-slate-50/50">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Оборудование ({sub.devices?.length || 0})</h3>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Оборудование ({sub.devices?.length || 0})</h3>
+                <button onClick={() => setAddDeviceTo(sub.account_number)} className="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors">
+                  <Plus size={16} /> Привязать устройство
+                </button>
+              </div>
+
               <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {sub.devices && sub.devices.length > 0 ? (
                   sub.devices.map(dev => (
@@ -91,9 +106,9 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {selectedSub && (
-        <BalanceModal subscriber={selectedSub} onClose={() => setSelectedSub(null)} onUpdate={handleSearch} />
-      )}
+      {selectedSub && <BalanceModal subscriber={selectedSub} onClose={() => setSelectedSub(null)} onUpdate={handleSearch} />}
+      {createSubModal && <SubscriberModal onClose={() => setCreateSubModal(false)} onSuccess={() => { setCreateSubModal(false); setQuery(''); }} />}
+      {addDeviceTo && <DeviceModal subscriberAccount={addDeviceTo} onClose={() => setAddDeviceTo(null)} onSuccess={handleSearch} />}
     </div>
   );
 };
