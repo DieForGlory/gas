@@ -110,22 +110,22 @@ async def update_balance(
     subscriber.balance += payload.amount
     db.commit()
 
-    # Защищенный блок MQTT
+    # Изолируем MQTT, чтобы его сбой не приводил к Internal Server Error
     try:
         async with aiomqtt.Client(
                 hostname=settings.MQTT_BROKER,
                 port=settings.MQTT_PORT,
                 username=settings.MQTT_USER,
                 password=settings.MQTT_PASSWORD,
-                timeout=5 # Ограничение времени ожидания
+                timeout=2  # Короткий таймаут
         ) as client:
             for device in subscriber.devices:
                 action = crud.check_billing_automation(db, device.imei)
                 if action:
                     await send_command(client, device.imei, action)
-    except Exception as e:
-        print(f"MQTT Error (Balance Update): {e}")
-        # Не бросаем 500 ошибку, так как баланс в БД уже обновлен успешно
+    except Exception as mqtt_err:
+        print(f"MQTT connection failed: {mqtt_err}")
+        # Не бросаем ошибку, так как деньги в БД уже зачислены
 
     return {"account_number": account_number, "new_balance": subscriber.balance}
 

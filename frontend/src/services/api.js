@@ -34,7 +34,9 @@ export const subscriberService = {
   create: (data) => api.post('/subscribers', data),
   getOne: (accountNumber) => api.get(`/subscribers/${accountNumber}`),
   // Исправленный метод:
-  updateBalance: (accountNumber, amount) => api.post(`/subscribers/${accountNumber}/balance`, { amount: parseFloat(amount) }),
+  updateBalance: (accountNumber, amount) => api.post(`/subscribers/${accountNumber}/balance`, {
+    amount: parseFloat(amount)
+  }),
 };
 
 export const deviceService = {
