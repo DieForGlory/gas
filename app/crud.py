@@ -3,7 +3,25 @@ import secrets
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from . import models, schemas
+from app.core.security import get_password_hash
 
+def create_user(db: Session, user: schemas.UserCreate):
+    db_user = models.User(
+        username=user.username,
+        password_hash=get_password_hash(user.password),
+        role=user.role
+    )
+    db.add(db_user)
+    try:
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except IntegrityError:
+        db.rollback()
+        return None
+
+def get_users(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.User).offset(skip).limit(limit).all()
 
 def get_device(db: Session, imei: str):
     return db.query(models.Device).filter(models.Device.imei == imei).first()

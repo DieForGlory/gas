@@ -18,21 +18,20 @@ async def handle_status_message(payload: str, topic: str, db: Session, mqtt_clie
         return
 
     device.last_online = datetime.now(timezone.utc)
+    device.state_l = data.l
+    device.state_r = data.r
+    device.error_flag = data.err
+    device.rssi = data.s
 
     if data.err == 1:
-        # Логика обработки заклинивания клапана (ERROR state)
         device.manual_control = True
     elif data.l != data.r:
-        # Рассинхрон: устройство само проводит попытки.
-        # Сервер фиксирует состояние "Рассинхрон / Ручное вмешательство"
         pass
     elif data.l == 1 and data.r == 1 and device.auth_status == models.AuthStatus.PROVISIONING:
-        # Подтверждение успешного провижининга после перезагрузки
         crud.activate_device(db, imei)
 
     db.commit()
 
-    # Проверка триггеров автоматики биллинга
     action = crud.check_billing_automation(db, imei)
     if action:
         await send_command(mqtt_client, imei, action)

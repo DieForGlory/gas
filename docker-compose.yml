@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: gas_valves
     ports:
-      - "5433:5433"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -17,6 +17,7 @@ services:
       EMQX_NODE_NAME: emqx@node1.emqx.io
       EMQX_ALLOW_ANONYMOUS: "false"
       EMQX_AUTH__MNESIA__PASSWORD_HASH: plain
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: "admin123"
     ports:
       - "1883:1883"     # MQTT TCP
       - "8083:8083"     # MQTT WebSocket
