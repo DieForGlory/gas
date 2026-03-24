@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import UsersPage from './pages/Users';
+import Layout from './components/Layout';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));

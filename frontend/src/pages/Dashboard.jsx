@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { subscriberService } from '../services/api';
 import DeviceCard from '../components/DeviceCard';
 import BalanceModal from '../components/BalanceModal';
-import { Search } from 'lucide-react';
+import { Search, MapPin, CreditCard } from 'lucide-react';
 
 const Dashboard = () => {
   const [query, setQuery] = useState('');
@@ -16,87 +16,83 @@ const Dashboard = () => {
 
     setLoading(true);
     try {
-      const { data } = await subscriberService.search(query); //
+      const { data } = await subscriberService.search(query);
       setResults(data);
     } catch (error) {
-      console.error("Ошибка поиска:", error);
-      alert("Ошибка при выполнении поиска");
+      alert("Ошибка поиска");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <form onSubmit={handleSearch} className="flex gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="glass-panel rounded-2xl p-2.5">
+        <form onSubmit={handleSearch} className="flex gap-2 relative">
+          <div className="flex-1 relative flex items-center">
+            <Search className="absolute left-5 text-slate-400" size={22} />
             <input
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"
-              placeholder="Введите лицевой счет, ФИО или адрес абонента..."
+              className="w-full pl-14 pr-6 py-4 bg-transparent border-none outline-none font-medium text-slate-700 text-lg placeholder:text-slate-400"
+              placeholder="Введите лицевой счет, ФИО или адрес..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            {loading ? 'Поиск...' : 'НАЙТИ'}
+          <button type="submit" disabled={loading} className="btn-primary min-w-[160px] text-lg">
+            {loading ? 'Поиск...' : 'Найти'}
           </button>
         </form>
       </div>
 
-      <div className="space-y-8">
-        {results.length === 0 && !loading && query && (
-          <div className="text-center py-20 text-gray-400">Ничего не найдено</div>
-        )}
-
+      <div className="space-y-6">
         {results.map(sub => (
-          <div key={sub.account_number} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-              <div>
-                <h2 className="text-2xl font-black text-gray-800">{sub.name}</h2>
-                <p className="text-gray-500 font-medium">{sub.address}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="text-xs font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">Л/С: {sub.account_number}</span>
-                  <button
-                    onClick={() => setSelectedSub(sub)}
-                    className="text-xs font-bold text-blue-600 hover:underline"
-                  >
-                    + Пополнить баланс
-                  </button>
+          <div key={sub.account_number} className="bg-white rounded-3xl shadow-soft border border-slate-200/60 overflow-hidden">
+            <div className="p-8 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-gradient-to-br from-white to-slate-50/50">
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-mono font-bold tracking-wide">
+                  <CreditCard size={14} /> {sub.account_number}
+                </div>
+                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">{sub.name}</h2>
+                <div className="flex items-center gap-2 text-slate-500 font-medium">
+                  <MapPin size={16} className="text-slate-400" />
+                  <span>{sub.address}</span>
                 </div>
               </div>
-              <div className="bg-gray-50 px-6 py-4 rounded-2xl text-right min-w-[150px]">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Текущий баланс</p>
-                <p className={`text-2xl font-black ${parseFloat(sub.balance) < 0 ? 'text-red-500' : 'text-green-500'}`}>
-                  {sub.balance} ₽
+
+              <div className="flex flex-col items-end min-w-[200px] bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                <span className="text-slate-400 text-[11px] font-bold uppercase tracking-widest mb-1">Баланс счета</span>
+                <p className={`text-4xl font-black tabular-nums tracking-tight ${parseFloat(sub.balance) < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                  {sub.balance} <span className="text-2xl opacity-50">₽</span>
                 </p>
+                <button
+                  onClick={() => setSelectedSub(sub)}
+                  className="mt-4 w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98]"
+                >
+                  Пополнить баланс
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sub.devices && sub.devices.length > 0 ? (
-                sub.devices.map(dev => (
-                  <DeviceCard key={dev.imei} device={dev} onUpdate={handleSearch} /> //
-                ))
-              ) : (
-                <div className="col-span-full py-4 text-sm text-gray-400 italic">Нет зарегистрированных устройств</div>
-              )}
+            <div className="p-8 bg-slate-50/50">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Оборудование ({sub.devices?.length || 0})</h3>
+              <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+                {sub.devices && sub.devices.length > 0 ? (
+                  sub.devices.map(dev => (
+                    <DeviceCard key={dev.imei} device={dev} onUpdate={handleSearch} />
+                  ))
+                ) : (
+                  <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl">
+                    <p className="text-slate-400 font-medium">Нет привязанных устройств</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       {selectedSub && (
-        <BalanceModal
-          subscriber={selectedSub}
-          onClose={() => setSelectedSub(null)}
-          onUpdate={handleSearch}
-        />
+        <BalanceModal subscriber={selectedSub} onClose={() => setSelectedSub(null)} onUpdate={handleSearch} />
       )}
     </div>
   );
