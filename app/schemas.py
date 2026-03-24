@@ -1,13 +1,13 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from .models import ContractStatus, AuthStatus, Role
 
 class SubscriberBase(BaseModel):
     name: str
     address: str
-    contact_person: str
-    phone: str
+    contact_person: Optional[str] = None  # Сделано необязательным
+    phone: Optional[str] = None           # Сделано необязательным
 
 class SubscriberCreate(SubscriberBase):
     account_number: str
@@ -53,6 +53,7 @@ class DeviceOut(DeviceCreate):
 
     class Config:
         from_attributes = True
+
 class UserBase(BaseModel):
     username: str
     role: Role
@@ -65,6 +66,7 @@ class UserOut(UserBase):
 
     class Config:
         from_attributes = True
+
 class StatusPayload(BaseModel):
     id: str
     l: int

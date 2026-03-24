@@ -30,11 +30,11 @@ export const adminService = {
 };
 
 export const subscriberService = {
-  search: (query) => api.get(`/dashboard/search?query=${query}`), //
-  get: (accountNumber) => api.get(`/subscribers/${accountNumber}`), //
-  create: (data) => api.post('/subscribers', data), //
-  updateBalance: (accountNumber, amount) =>
-    api.post(`/subscribers/${accountNumber}/balance`, { amount }) //
+  search: (query) => api.get(`/dashboard/search?query=${query}`),
+  create: (data) => api.post('/subscribers', data),
+  getOne: (accountNumber) => api.get(`/subscribers/${accountNumber}`),
+  // Исправленный метод:
+  updateBalance: (accountNumber, amount) => api.post(`/subscribers/${accountNumber}/balance`, { amount: parseFloat(amount) }),
 };
 
 export const deviceService = {

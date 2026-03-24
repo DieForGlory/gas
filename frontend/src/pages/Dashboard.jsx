@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { subscriberService } from '../services/api';
 import DeviceCard from '../components/DeviceCard';
 import BalanceModal from '../components/BalanceModal';
 import SubscriberModal from '../components/SubscriberModal';
 import DeviceModal from '../components/DeviceModal';
-import { Search, MapPin, CreditCard, Plus } from 'lucide-react';
+import { Search, MapPin, CreditCard, Plus, Loader2 } from 'lucide-react';
 
 const Dashboard = () => {
   const [query, setQuery] = useState('');
@@ -14,19 +14,25 @@ const Dashboard = () => {
   const [addDeviceTo, setAddDeviceTo] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSearch = async (e) => {
-    if (e) e.preventDefault();
-    if (!query.trim()) return;
-
+  const fetchSubscribers = useCallback(async (searchQuery = '') => {
     setLoading(true);
     try {
-      const { data } = await subscriberService.search(query);
+      const { data } = await subscriberService.search(searchQuery);
       setResults(data);
     } catch (error) {
-      alert("Ошибка поиска");
+      console.error("Fetch error:", error);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchSubscribers();
+  }, [fetchSubscribers]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchSubscribers(query);
   };
 
   return (
@@ -43,8 +49,8 @@ const Dashboard = () => {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-            <button type="submit" disabled={loading} className="btn-primary min-w-[140px] text-lg">
-              {loading ? 'Поиск...' : 'Найти'}
+            <button type="submit" disabled={loading} className="btn-primary min-w-[140px] text-lg flex items-center justify-center">
+              {loading ? <Loader2 className="animate-spin" size={20} /> : 'Найти'}
             </button>
           </form>
         </div>
@@ -91,24 +97,23 @@ const Dashboard = () => {
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-                {sub.devices && sub.devices.length > 0 ? (
-                  sub.devices.map(dev => (
-                    <DeviceCard key={dev.imei} device={dev} onUpdate={handleSearch} />
-                  ))
-                ) : (
-                  <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl">
-                    <p className="text-slate-400 font-medium">Нет привязанных устройств</p>
-                  </div>
-                )}
+                {sub.devices?.map(dev => (
+                  <DeviceCard key={dev.imei} device={dev} onUpdate={() => fetchSubscribers(query)} />
+                ))}
               </div>
             </div>
           </div>
         ))}
+        {!loading && results.length === 0 && (
+          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300 text-slate-400 font-bold italic">
+            Абоненты не найдены
+          </div>
+        )}
       </div>
 
-      {selectedSub && <BalanceModal subscriber={selectedSub} onClose={() => setSelectedSub(null)} onUpdate={handleSearch} />}
-      {createSubModal && <SubscriberModal onClose={() => setCreateSubModal(false)} onSuccess={() => { setCreateSubModal(false); setQuery(''); }} />}
-      {addDeviceTo && <DeviceModal subscriberAccount={addDeviceTo} onClose={() => setAddDeviceTo(null)} onSuccess={handleSearch} />}
+      {selectedSub && <BalanceModal subscriber={selectedSub} onClose={() => setSelectedSub(null)} onUpdate={() => fetchSubscribers(query)} />}
+      {createSubModal && <SubscriberModal onClose={() => setCreateSubModal(false)} onSuccess={(acc) => { setQuery(acc); fetchSubscribers(acc); }} />}
+      {addDeviceTo && <DeviceModal subscriberAccount={addDeviceTo} onClose={() => setAddDeviceTo(null)} onSuccess={() => fetchSubscribers(query)} />}
     </div>
   );
 };
