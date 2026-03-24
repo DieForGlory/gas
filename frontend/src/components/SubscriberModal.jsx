@@ -3,7 +3,13 @@ import { subscriberService } from '../services/api';
 import { X } from 'lucide-react';
 
 const SubscriberModal = ({ onClose, onSuccess }) => {
-  const [formData, setFormData] = useState({ account_number: '', name: '', address: '' });
+  const [formData, setFormData] = useState({
+    account_number: '',
+    name: '',
+    address: '',
+    contact_person: '',
+    phone: ''
+  });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -39,6 +45,16 @@ const SubscriberModal = ({ onClose, onSuccess }) => {
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Адрес</label>
             <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:bg-white transition-all" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Контактное лицо</label>
+              <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:bg-white transition-all" value={formData.contact_person} onChange={e => setFormData({...formData, contact_person: e.target.value})} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Телефон</label>
+              <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:bg-white transition-all font-mono" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+            </div>
           </div>
           <div className="pt-4 flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-3 text-slate-600 font-semibold hover:bg-slate-50 rounded-xl transition-colors">Отмена</button>

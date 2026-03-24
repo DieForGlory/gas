@@ -24,8 +24,9 @@ export const authService = {
 };
 
 export const adminService = {
-  getUsers: () => api.get('/users'), //
-  createUser: (userData) => api.post('/users', userData), //
+  getUsers: () => api.get('/users'),
+  createUser: (userData) => api.post('/users', userData),
+  getAuditLogs: () => api.get('/audit')
 };
 
 export const subscriberService = {

@@ -290,3 +290,11 @@ async def emqx_acl(
         return {"result": "allow"}
 
     raise HTTPException(status_code=401, detail="deny")
+
+@api_router.get("/audit", response_model=List[schemas.AuditLogOut])
+def read_audit_logs(
+    skip: int = 0, limit: int = 100,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin)
+):
+    return db.query(models.AuditLog).order_by(models.AuditLog.timestamp.desc()).offset(skip).limit(limit).all()

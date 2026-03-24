@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, LogOut, Flame } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Flame, History } from 'lucide-react';
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -45,6 +45,7 @@ const Layout = ({ children }) => {
         <nav className="flex-1 px-4 py-8 space-y-1.5 overflow-y-auto">
           <NavItem to="/" icon={LayoutDashboard} label="Обзорная панель" />
           <NavItem to="/users" icon={Users} label="Администраторы" />
+          <NavItem to="/audit" icon={History} label="Журнал аудита" />
         </nav>
 
         <div className="p-4 border-t border-white/5">

@@ -28,6 +28,16 @@ class DeviceBase(BaseModel):
 class DeviceCreate(DeviceBase):
     imei: str = Field(min_length=15, max_length=15)
 
+class AuditLogOut(BaseModel):
+    id: int
+    timestamp: datetime
+    operator_id: int
+    imei: Optional[str] = None
+    action: str
+
+    class Config:
+        from_attributes = True
+
 class DeviceUpdate(BaseModel):
     hb_interval: Optional[int] = Field(None, ge=10, le=3600)
     valve_type: Optional[int] = Field(None, ge=0, le=1)
