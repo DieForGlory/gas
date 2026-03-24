@@ -1,5 +1,6 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, Form
+from decimal import Decimal  # Добавлено для работы с типом Numeric
+from fastapi import APIRouter, Depends, HTTPException, Form, BackgroundTasks
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
@@ -10,7 +11,7 @@ from pydantic import BaseModel
 import hashlib
 
 from app import models, schemas, crud
-from app.core.database import get_db
+from app.core.database import get_db, SessionLocal
 from app.core.config import settings
 from app.core.security import ALGORITHM, verify_password, create_access_token
 from app.mqtt.handlers import send_command
@@ -18,6 +19,29 @@ from app.mqtt.handlers import send_command
 api_router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+async def notify_devices(account_number: str, db_session_factory):
+    """Фоновая задача для отправки команд MQTT"""
+    db = db_session_factory()
+    try:
+        subscriber = db.query(models.Subscriber).filter(models.Subscriber.account_number == account_number).first()
+        if not subscriber:
+            return
+
+        async with aiomqtt.Client(
+                hostname=settings.MQTT_BROKER,
+                port=settings.MQTT_PORT,
+                username=settings.MQTT_USER,
+                password=settings.MQTT_PASSWORD
+        ) as client:
+            for device in subscriber.devices:
+                action = crud.check_billing_automation(db, device.imei)
+                if action:
+                    await send_command(client, device.imei, action)
+    except Exception as mqtt_err:
+        print(f"MQTT task failed: {mqtt_err}")
+    finally:
+        db.close()
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
@@ -100,6 +124,7 @@ class BalanceUpdate(BaseModel):
 async def update_balance(
         account_number: str,
         payload: BalanceUpdate,
+        background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
         user: models.User = Depends(get_current_user)
 ):
@@ -107,27 +132,14 @@ async def update_balance(
     if not subscriber:
         raise HTTPException(status_code=404, detail="Subscriber not found")
 
-    subscriber.balance += payload.amount
+    # Исправление: Конвертация float в Decimal для предотвращения TypeError
+    subscriber.balance += Decimal(str(payload.amount))
     db.commit()
 
-    # Изолируем MQTT, чтобы его сбой не приводил к Internal Server Error
-    try:
-        async with aiomqtt.Client(
-                hostname=settings.MQTT_BROKER,
-                port=settings.MQTT_PORT,
-                username=settings.MQTT_USER,
-                password=settings.MQTT_PASSWORD,
-                timeout=2  # Короткий таймаут
-        ) as client:
-            for device in subscriber.devices:
-                action = crud.check_billing_automation(db, device.imei)
-                if action:
-                    await send_command(client, device.imei, action)
-    except Exception as mqtt_err:
-        print(f"MQTT connection failed: {mqtt_err}")
-        # Не бросаем ошибку, так как деньги в БД уже зачислены
+    # Запуск фоновой задачи для MQTT
+    background_tasks.add_task(notify_devices, account_number, SessionLocal)
 
-    return {"account_number": account_number, "new_balance": subscriber.balance}
+    return {"account_number": account_number, "new_balance": float(subscriber.balance)}
 
 @api_router.get("/dashboard/search", response_model=List[schemas.SubscriberOut])
 def search_subscribers(
