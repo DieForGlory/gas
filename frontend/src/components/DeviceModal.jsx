@@ -29,8 +29,17 @@ const DeviceModal = ({ subscriberAccount, onClose, onSuccess }) => {
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">IMEI устройства</label>
-            <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:bg-white transition-all font-mono" value={formData.imei} onChange={e => setFormData({...formData, imei: e.target.value})} />
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">IMEI устройства (15 цифр)</label>
+            <input
+              required
+              type="text"
+              minLength={15}
+              maxLength={15}
+              pattern="\d{15}"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:bg-white transition-all font-mono"
+              value={formData.imei}
+              onChange={e => setFormData({...formData, imei: e.target.value.replace(/\D/g, '')})}
+            />
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Тип клапана</label>

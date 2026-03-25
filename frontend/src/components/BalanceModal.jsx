@@ -20,7 +20,7 @@ const BalanceModal = ({ subscriber, onClose, onUpdate }) => {
         onClose();
       }, 1500);
     } catch (error) {
-      alert("Ошибка при пополнении баланса");
+      alert(error.response?.data?.detail || "Ошибка при пополнении баланса");
     } finally {
       setLoading(false);
     }
@@ -60,6 +60,7 @@ const BalanceModal = ({ subscriber, onClose, onUpdate }) => {
                     required
                     type="number"
                     step="0.01"
+                    min="0.01"
                     className="w-full bg-white border-2 border-slate-100 rounded-2xl px-6 py-5 text-2xl font-black text-blue-600 outline-none focus:border-blue-500 transition-all placeholder:text-slate-200"
                     placeholder="0.00"
                     value={amount}

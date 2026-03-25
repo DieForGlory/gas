@@ -15,6 +15,7 @@ class SubscriberCreate(SubscriberBase):
 class SubscriberOut(SubscriberCreate):
     balance: float
     contract_status: ContractStatus
+    devices: List['DeviceOut'] = []
 
     class Config:
         from_attributes = True
@@ -45,6 +46,7 @@ class DeviceUpdate(BaseModel):
 class DeviceOut(DeviceCreate):
     last_online: datetime
     auth_status: AuthStatus
+    is_online: bool
     state_l: Optional[int] = None
     state_r: Optional[int] = None
     error_flag: int
@@ -73,6 +75,7 @@ class StatusPayload(BaseModel):
     r: int
     err: int
     s: int
+    bat: Optional[float] = None
 
 class ProvisionPayload(BaseModel):
     cmd: str = "PROVISION"

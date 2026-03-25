@@ -9,7 +9,8 @@ import aiomqtt
 from jose import JWTError, jwt
 from pydantic import BaseModel
 import hashlib
-
+import urllib.request
+import base64
 from app import models, schemas, crud
 from app.core.database import get_db, SessionLocal
 from app.core.config import settings
@@ -20,8 +21,8 @@ api_router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
+
 async def notify_devices(account_number: str, db_session_factory):
-    """Фоновая задача для отправки команд MQTT"""
     db = db_session_factory()
     try:
         subscriber = db.query(models.Subscriber).filter(models.Subscriber.account_number == account_number).first()
@@ -37,6 +38,14 @@ async def notify_devices(account_number: str, db_session_factory):
             for device in subscriber.devices:
                 action = crud.check_billing_automation(db, device.imei)
                 if action:
+                    if (action == "CLOSE" and device.state_l == 0 and device.state_r == 0) or \
+                            (action == "OPEN" and device.state_l == 1 and device.state_r == 1):
+                        continue
+
+                    device.pending_command = action
+                    device.command_retries = 0
+                    db.commit()
+
                     await send_command(client, device.imei, action)
     except Exception as mqtt_err:
         print(f"MQTT task failed: {mqtt_err}")
@@ -261,6 +270,15 @@ def reset_device_key(
     crud.log_audit(db, operator_id=admin.id, imei=imei, action="RESET_KEY")
     db.commit()
 
+    # Принудительный разрыв сессии в EMQX
+    req = urllib.request.Request(f"http://emqx:18083/api/v5/clients/{imei}", method="DELETE")
+    auth_str = base64.b64encode(b"admin:public").decode("ascii")
+    req.add_header("Authorization", f"Basic {auth_str}")
+    try:
+        urllib.request.urlopen(req, timeout=2)
+    except Exception:
+        pass
+
     return {"status": "Key reset successful"}
 
 @api_router.post("/mqtt/auth")
@@ -299,10 +317,11 @@ async def emqx_acl(
         return {"result": "allow"}
 
     allowed_sub = f"gas/command/{username}"
+    allowed_sub_prov = f"gas/config/{username}/provision"
     allowed_pub_status = f"gas/status/{username}"
     allowed_pub_prov = f"gas/config/{username}/provision"
 
-    if action == "subscribe" and topic == allowed_sub:
+    if action == "subscribe" and topic in [allowed_sub, allowed_sub_prov]:
         return {"result": "allow"}
     if action == "publish" and topic in [allowed_pub_status, allowed_pub_prov]:
         return {"result": "allow"}

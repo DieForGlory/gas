@@ -18,7 +18,7 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const { data } = await subscriberService.search(searchQuery);
-      setResults(data);
+      setResults(data || []);
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {

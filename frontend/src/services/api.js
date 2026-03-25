@@ -14,12 +14,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authService = {
   login: (username, password) => {
     const formData = new FormData();
     formData.append('username', username);
     formData.append('password', password);
-    return api.post('/auth/login', formData); //
+    return api.post('/auth/login', formData);
   }
 };
 
@@ -33,19 +44,17 @@ export const subscriberService = {
   search: (query) => api.get(`/dashboard/search?query=${query}`),
   create: (data) => api.post('/subscribers', data),
   getOne: (accountNumber) => api.get(`/subscribers/${accountNumber}`),
-  // Исправленный метод:
   updateBalance: (accountNumber, amount) => api.post(`/subscribers/${accountNumber}/balance`, {
     amount: parseFloat(amount)
   }),
 };
 
 export const deviceService = {
-  register: (data) => api.post('/devices', data), //
-  getStatus: (imei) => api.get(`/devices/${imei}/status`), //
-  sendCommand: (imei, command) =>
-    api.post(`/devices/${imei}/command?command=${command}`), //
-  resetKey: (imei) => api.post(`/devices/${imei}/reset_key`), //
-  updateConfig: (imei, config) => api.patch(`/devices/${imei}`, config) //
+  register: (data) => api.post('/devices', data),
+  getStatus: (imei) => api.get(`/devices/${imei}/status`),
+  sendCommand: (imei, command) => api.post(`/devices/${imei}/command?command=${command}`),
+  resetKey: (imei) => api.post(`/devices/${imei}/reset_key`),
+  updateConfig: (imei, config) => api.patch(`/devices/${imei}`, config)
 };
 
 export default api;

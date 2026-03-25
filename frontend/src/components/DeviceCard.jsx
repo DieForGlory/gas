@@ -6,7 +6,8 @@ const DeviceCard = ({ device, onUpdate }) => {
   const [hb, setHb] = useState(device.hb_interval);
   const [loadingCmd, setLoadingCmd] = useState('');
 
-  const isOnline = (new Date() - new Date(device.last_online)) / 1000 < (device.hb_interval + 60);
+  // ИСПОЛЬЗУЕМ ФЛАГ ОТ БЭКЕНДА
+  const isOnline = device.is_online;
 
   const handleCommand = async (cmd) => {
     setLoadingCmd(cmd);
@@ -24,7 +25,7 @@ const DeviceCard = ({ device, onUpdate }) => {
   };
 
   const resetKey = async () => {
-    if(confirm("Сбросить ключи шифрования? Устройство перейдет в режим сопряжения.")) {
+    if(window.confirm("Сбросить ключи шифрования? Устройство перейдет в режим сопряжения.")) {
       await deviceService.resetKey(device.imei);
       onUpdate();
     }
@@ -43,6 +44,10 @@ const DeviceCard = ({ device, onUpdate }) => {
             </span>
             <span className={`text-[11px] font-bold uppercase tracking-widest ${isOnline ? 'text-emerald-600' : 'text-slate-400'}`}>
               {isOnline ? 'На связи' : 'Офлайн'}
+            </span>
+            {/* ИНДИКАТОР СТАТУСА АВТОРИЗАЦИИ */}
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md ${device.auth_status === 'ACTIVE' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}`}>
+              {device.auth_status}
             </span>
           </div>
           <h4 className="font-mono text-lg font-bold text-slate-900 tracking-tight">{device.imei}</h4>
@@ -65,7 +70,7 @@ const DeviceCard = ({ device, onUpdate }) => {
         </div>
         <div className="metric-box">
           <Wifi size={16} className="text-slate-400 mb-1.5" />
-          <p className="font-mono font-bold text-slate-700 text-sm">{device.rssi || 0}</p>
+          <p className="font-mono font-bold text-slate-700 text-sm">{device.rssi !== null ? device.rssi : '--'}</p>
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">dBm</p>
         </div>
         <div className={`metric-box border-transparent ${
@@ -102,7 +107,7 @@ const DeviceCard = ({ device, onUpdate }) => {
         <div className="flex gap-2">
           <div className="relative flex-1 flex items-center">
             <Settings2 size={14} className="absolute left-3 text-slate-400" />
-            <input type="number" value={hb} onChange={(e) => setHb(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm font-mono font-medium outline-none focus:border-blue-500 focus:bg-white transition-colors" />
+            <input type="number" min="10" max="3600" value={hb} onChange={(e) => setHb(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm font-mono font-medium outline-none focus:border-blue-500 focus:bg-white transition-colors" />
           </div>
           <button onClick={() => updateConfig({ hb_interval: parseInt(hb) })} className="px-4 text-xs bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors">
             Интервал

@@ -32,7 +32,7 @@ const SubscriberModal = ({ onClose, onSuccess }) => {
         <div className="flex justify-between items-center p-8 border-b border-slate-50 bg-slate-50/50">
           <div>
             <h3 className="text-xl font-black text-slate-800 tracking-tight">Регистрация абонента</h3>
-            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Все поля обязательны</p>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Заполните данные</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white rounded-xl transition-colors text-slate-400 shadow-sm"><X size={20} /></button>
         </div>
@@ -40,7 +40,7 @@ const SubscriberModal = ({ onClose, onSuccess }) => {
         <form onSubmit={handleSubmit} className="p-8 space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Лицевой счет</label>
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Лицевой счет *</label>
               <div className="relative">
                 <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                 <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 outline-none focus:border-blue-500 focus:bg-white transition-all font-mono font-bold text-slate-700" value={formData.account_number} onChange={e => setFormData({...formData, account_number: e.target.value})} />
@@ -50,13 +50,13 @@ const SubscriberModal = ({ onClose, onSuccess }) => {
               <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Телефон</label>
               <div className="relative">
                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                <input required type="tel" className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 outline-none focus:border-blue-500 focus:bg-white transition-all font-mono" placeholder="+79000000000" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                <input type="tel" className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 outline-none focus:border-blue-500 focus:bg-white transition-all font-mono" placeholder="+79000000000" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">ФИО / Организация</label>
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">ФИО / Организация *</label>
             <div className="relative">
               <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
               <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 outline-none focus:border-blue-500 focus:bg-white transition-all font-semibold" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
@@ -64,7 +64,7 @@ const SubscriberModal = ({ onClose, onSuccess }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Адрес объекта</label>
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Адрес объекта *</label>
             <div className="relative">
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
               <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 outline-none focus:border-blue-500 focus:bg-white transition-all font-medium" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
@@ -75,7 +75,7 @@ const SubscriberModal = ({ onClose, onSuccess }) => {
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Контактное лицо</label>
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-              <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 outline-none focus:border-blue-500 focus:bg-white transition-all" value={formData.contact_person} onChange={e => setFormData({...formData, contact_person: e.target.value})} />
+              <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 outline-none focus:border-blue-500 focus:bg-white transition-all" value={formData.contact_person} onChange={e => setFormData({...formData, contact_person: e.target.value})} />
             </div>
           </div>
 

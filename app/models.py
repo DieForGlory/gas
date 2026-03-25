@@ -63,7 +63,7 @@ class Device(Base):
     manual_control = Column(Boolean, default=False, nullable=False)
     pending_command = Column(String, nullable=True)
     command_retries = Column(Integer, default=0, nullable=False)
-    # Новые поля телеметрии
+    is_online = Column(Boolean, default=False, nullable=False)
     state_l = Column(Integer, nullable=True)
     state_r = Column(Integer, nullable=True)
     error_flag = Column(Integer, default=0, nullable=False)
