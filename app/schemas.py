@@ -3,23 +3,7 @@ from typing import Optional, List
 from datetime import datetime
 from .models import ContractStatus, AuthStatus, Role
 
-class SubscriberBase(BaseModel):
-    name: str
-    address: str
-    contact_person: Optional[str] = None  # Сделано необязательным
-    phone: Optional[str] = None           # Сделано необязательным
-
-class SubscriberCreate(SubscriberBase):
-    account_number: str
-
-class SubscriberOut(SubscriberCreate):
-    balance: float
-    contract_status: ContractStatus
-    devices: List['DeviceOut'] = []
-
-    class Config:
-        from_attributes = True
-
+# 1. СНАЧАЛА Device
 class DeviceBase(BaseModel):
     subscriber_account: str
     valve_type: int = Field(ge=0, le=1)
@@ -28,16 +12,6 @@ class DeviceBase(BaseModel):
 
 class DeviceCreate(DeviceBase):
     imei: str = Field(min_length=15, max_length=15)
-
-class AuditLogOut(BaseModel):
-    id: int
-    timestamp: datetime
-    operator_id: int
-    imei: Optional[str] = None
-    action: str
-
-    class Config:
-        from_attributes = True
 
 class DeviceUpdate(BaseModel):
     hb_interval: Optional[int] = Field(None, ge=10, le=3600)
@@ -52,6 +26,35 @@ class DeviceOut(DeviceCreate):
     error_flag: int
     rssi: Optional[int] = None
     battery: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
+# 2. ПОТОМ Subscriber
+class SubscriberBase(BaseModel):
+    name: str
+    address: str
+    contact_person: Optional[str] = None
+    phone: Optional[str] = None
+
+class SubscriberCreate(SubscriberBase):
+    account_number: str
+
+class SubscriberOut(SubscriberCreate):
+    balance: float
+    contract_status: ContractStatus
+    devices: List[DeviceOut] = []  # <--- БЕЗ КАВЫЧЕК!
+
+    class Config:
+        from_attributes = True
+
+# 3. Остальное
+class AuditLogOut(BaseModel):
+    id: int
+    timestamp: datetime
+    operator_id: int
+    imei: Optional[str] = None
+    action: str
 
     class Config:
         from_attributes = True

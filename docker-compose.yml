@@ -32,7 +32,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/gas_valves
       - MQTT_BROKER=emqx
-      - MQTT_PORT=1883
+      - MQTT_USER=backend_service
+      - MQTT_PASSWORD=secure_mqtt_pass
     ports:
       - "8000:8000"
     depends_on:

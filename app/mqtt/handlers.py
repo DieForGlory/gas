@@ -9,9 +9,7 @@ from app import crud, models
 async def handle_status_message(payload: str, topic: str, db: Session, mqtt_client: Client):
     imei = topic.split("/")[-1]
 
-    # Очистка payload от возможных кавычек и пробелов
     clean_payload = payload.strip().strip('"').strip("'")
-
     if clean_payload == "OPENED_OK":
         device = crud.get_device(db, imei)
         if device:
@@ -62,6 +60,10 @@ async def handle_status_message(payload: str, topic: str, db: Session, mqtt_clie
 
 
 async def handle_provision_request(payload: str, topic: str, db: Session, mqtt_client: Client):
+    # Предотвращение бесконечного цикла (игнорируем собственные ответы сервера)
+    if "new_key" in payload:
+        return
+
     imei = topic.split("/")[-2]
     new_key = crud.generate_provisioning_key(db, imei)
 
