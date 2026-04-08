@@ -47,10 +47,8 @@ const DeviceCard = ({ device, onUpdate }) => {
 
   const formatLastOnline = (dateString) => {
     if (!dateString) return '--';
-
     const utcDateString = dateString.endsWith('Z') ? dateString : `${dateString}Z`;
     const date = new Date(utcDateString);
-
     return new Intl.DateTimeFormat('ru-RU', {
       day: '2-digit', month: '2-digit', year: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -80,6 +78,22 @@ const DeviceCard = ({ device, onUpdate }) => {
         }`}>
           {device.auth_status}
         </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+          Режим управления
+        </div>
+        <button
+          onClick={() => updateConfig({ manual_control: !device.manual_control })}
+          className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${
+            device.manual_control
+              ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+              : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+          }`}
+        >
+          {device.manual_control ? 'Ручной' : 'Авто (Биллинг)'}
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-5 text-sm">

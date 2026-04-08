@@ -112,7 +112,7 @@ def check_billing_automation(db: Session, imei: str) -> str | None:
         return None
 
     subscriber = db_device.subscriber
-    if subscriber.balance < 0:
+    if subscriber.balance <= 0:
         return "CLOSE"
     elif subscriber.balance > 0 and subscriber.contract_status == models.ContractStatus.ACTIVE:
         return "OPEN"

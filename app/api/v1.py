@@ -76,9 +76,10 @@ def create_new_user(
     if c_role == "LOCAL":
         raise HTTPException(status_code=403, detail="Операторы уровня LOCAL не могут создавать пользователей")
 
+    if c_role == "REGIONAL" and u_role in ["ADMIN", "REGIONAL"]:
+        raise HTTPException(status_code=403, detail="Администратор региона может создавать только операторов уровня LOCAL")
+
     if u_role == "REGIONAL":
-        if c_role != "ADMIN":
-            raise HTTPException(status_code=403, detail="Только ADMIN может создавать региональных пользователей")
         if not db.query(models.Region).filter(models.Region.id == user.region_id).first():
             raise HTTPException(status_code=400, detail="Неверный ID региона")
 
@@ -87,7 +88,7 @@ def create_new_user(
         if not district:
             raise HTTPException(status_code=400, detail="Неверный ID района")
         if c_role == "REGIONAL" and district.region_id != current_user.region_id:
-            raise HTTPException(status_code=403, detail="Нельзя создавать пользователей вне вашего региона")
+            raise HTTPException(status_code=403, detail="Нельзя создавать операторов вне своего региона")
 
     db_user = crud.create_user(db, user)
     if not db_user:
