@@ -509,7 +509,7 @@ def read_audit_logs(
         db: Session = Depends(get_db),
         admin: models.User = Depends(require_admin)
 ):
-    return db.query(models.AuditLog).order_by(models.AuditLog.timestamp.desc()).offset(skip).limit(limit).all()
+    return db.query(models.AuditLog).options(joinedload(models.AuditLog.operator)).order_by(models.AuditLog.timestamp.desc()).offset(skip).limit(limit).all()
 
 
 @api_router.get("/subscribers/{account_number}/audit", response_model=List[schemas.AuditLogOut])
@@ -526,12 +526,10 @@ def get_subscriber_audit(
     if not imeis: return []
 
     return db.query(models.AuditLog) \
+        .options(joinedload(models.AuditLog.operator)) \
         .filter(models.AuditLog.imei.in_(imeis)) \
         .order_by(models.AuditLog.timestamp.desc()) \
         .offset(skip).limit(limit).all()
-
-
-# --- EMQX Интеграция ---
 
 @api_router.post("/mqtt/auth")
 async def emqx_auth(

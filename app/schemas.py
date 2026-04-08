@@ -93,10 +93,19 @@ class PaginatedSubscribers(BaseModel):
     total: int
     items: List[SubscriberOut]
 
+class OperatorMin(BaseModel):
+    id: int
+    username: str
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    role: Role
+    model_config = ConfigDict(from_attributes=True)
+
 class AuditLogOut(BaseModel):
     id: int
     timestamp: datetime
     operator_id: int
+    operator: Optional[OperatorMin] = None
     imei: Optional[str] = None
     action: str
     model_config = ConfigDict(from_attributes=True)

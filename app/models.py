@@ -116,6 +116,7 @@ class AuditLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime, default=get_local_time)
     operator_id = Column(Integer, ForeignKey("users.id"))
+    operator = relationship("User")
     imei = Column(String, nullable=True)
     action = Column(String)
 
