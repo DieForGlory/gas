@@ -47,7 +47,10 @@ const DeviceCard = ({ device, onUpdate }) => {
 
   const formatLastOnline = (dateString) => {
     if (!dateString) return '--';
-    const date = new Date(dateString);
+
+    const utcDateString = dateString.endsWith('Z') ? dateString : `${dateString}Z`;
+    const date = new Date(utcDateString);
+
     return new Intl.DateTimeFormat('ru-RU', {
       day: '2-digit', month: '2-digit', year: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -126,7 +129,7 @@ const DeviceCard = ({ device, onUpdate }) => {
 
       <div className="mt-auto border-t border-slate-100 pt-4 space-y-4">
         <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 bg-slate-50 px-3 py-2.5 rounded-lg">
-          <div className="flex items-center gap-1.5 uppercase tracking-widest"><Clock size={14} /> Последний сеанс (GMT+5)</div>
+          <div className="flex items-center gap-1.5 uppercase tracking-widest"><Clock size={14} /> Последний сеанс</div>
           <span className="font-mono text-slate-800">{formatLastOnline(device.last_online)}</span>
         </div>
 
