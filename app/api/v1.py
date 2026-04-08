@@ -262,16 +262,10 @@ def update_subscriber(
     return subscriber
 
 
-# --- Баланс и Биллинг ---
-
-class BalanceUpdate(BaseModel):
-    amount: float
-
-
 @api_router.post("/subscribers/{account_number}/balance")
 async def update_balance(
         account_number: str,
-        payload: BalanceUpdate,
+        payload: schemas.BalanceUpdate,
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
         user: models.User = Depends(get_current_user)
@@ -561,8 +555,8 @@ async def emqx_auth(
         raise HTTPException(status_code=401, detail="deny")
 
     if device.secret_key_hash:
-        req_hash = hashlib.sha256(password.encode()).hexdigest()
-        if device.secret_key_hash == req_hash:
+        # Используем verify_password из вашего app.core.security
+        if verify_password(password, device.secret_key_hash):
             if device.auth_status in [models.AuthStatus.NEW, models.AuthStatus.PROVISIONING]:
                 device.auth_status = models.AuthStatus.ACTIVE
                 db.commit()
