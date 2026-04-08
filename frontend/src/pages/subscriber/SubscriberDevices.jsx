@@ -24,7 +24,7 @@ const SubscriberDevices = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-        {subscriber.devices.map(dev => (
+        {[...subscriber.devices].sort((a, b) => a.imei.localeCompare(b.imei)).map(device => (
           <DeviceCard key={dev.imei} device={dev} onUpdate={refresh} />
         ))}
         {subscriber.devices.length === 0 && (

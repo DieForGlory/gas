@@ -80,7 +80,7 @@ class Subscriber(Base):
     phone = Column(String, nullable=True)
 
     district = relationship("District", back_populates="subscribers")
-    devices = relationship("Device", back_populates="subscriber", cascade="all, delete-orphan")
+    devices = relationship("Device", back_populates="subscriber", cascade="all, delete-orphan", order_by="Device.imei")
 
 
 class Device(Base):

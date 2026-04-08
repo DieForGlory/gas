@@ -100,9 +100,28 @@ def create_new_user(
 def read_users(
         skip: int = 0, limit: int = 100,
         db: Session = Depends(get_db),
-        admin: models.User = Depends(require_admin)
+        current_user: models.User = Depends(get_current_user)  # Убрали Depends(require_admin)
 ):
-    return crud.get_users(db, skip=skip, limit=limit)
+    c_role = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+
+    if c_role == "LOCAL":
+        raise HTTPException(status_code=403, detail="Недостаточно прав")
+
+    if c_role == "ADMIN":
+        return crud.get_users(db, skip=skip, limit=limit)
+
+    if c_role == "REGIONAL":
+        # Выбираем пользователей, у которых либо совпадает регион,
+        # либо их район относится к региону текущего администратора
+        query = db.query(models.User).outerjoin(
+            models.District, models.User.district_id == models.District.id
+        ).filter(
+            or_(
+                models.User.region_id == current_user.region_id,
+                models.District.region_id == current_user.region_id
+            )
+        )
+        return query.offset(skip).limit(limit).all()
 
 
 # --- Управление типами клапанов ---

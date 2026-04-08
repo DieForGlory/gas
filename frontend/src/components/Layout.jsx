@@ -18,7 +18,9 @@ const Layout = ({ children }) => {
     }
   };
 
-  const isAdmin = getRole() === 'ADMIN';
+  const userRole = getRole();
+  const isAdmin = userRole === 'ADMIN';
+  const canManageUsers = userRole === 'ADMIN' || userRole === 'REGIONAL'; // <-- Новое условие
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -72,7 +74,7 @@ const Layout = ({ children }) => {
 
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
           <NavItem to="/" icon={LayoutDashboard} label={t('dashboard', 'Обзорная панель')} />
-          {isAdmin && <NavItem to="/users" icon={Users} label={t('administrators', 'Администраторы')} />}
+          {canManageUsers && <NavItem to="/users" icon={Users} label={t('administrators', 'Сотрудники')} />}
           {isAdmin && <NavItem to="/audit" icon={History} label={t('audit_log', 'Журнал аудита')} />}
           {isAdmin && <NavItem to="/valves" icon={Settings2} label={t('valve_types', 'Типы клапанов')} />}
         </nav>
