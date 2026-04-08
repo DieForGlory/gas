@@ -22,7 +22,6 @@ async def mqtt_listener():
                 await client.subscribe("gas/status/#", qos=1)
                 await client.subscribe("gas/config/+/provision", qos=1)
 
-                # Итерация для aiomqtt==1.1.0
                 async with client.messages() as messages:
                     async for message in messages:
                         payload = message.payload.decode()
@@ -31,10 +30,14 @@ async def mqtt_listener():
                         print(f"[MQTT RX] {topic} -> {payload}")
 
                         with SessionLocal() as db:
-                            if topic.startswith("gas/status/"):
-                                await handlers.handle_status_message(payload, topic, db, client)
-                            elif "provision" in topic:
-                                await handlers.handle_provision_request(payload, topic, db, client)
+                            try:
+                                if topic.startswith("gas/status/"):
+                                    await handlers.handle_status_message(payload, topic, db, client)
+                                elif "provision" in topic:
+                                    await handlers.handle_provision_request(payload, topic, db, client)
+                            except Exception as e:
+                                db.rollback()
+                                print(f"[MQTT DB ERROR] Ошибка обработки сообщения: {e}")
         except Exception as e:
             print(f"[MQTT ERROR] Сбой слушателя: {e}")
             await asyncio.sleep(reconnect_interval)

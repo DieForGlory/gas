@@ -281,13 +281,13 @@ async def update_balance(
     subscriber = query.first()
 
     if not subscriber:
-        raise HTTPException(status_code=404, detail="Абонент не найден или доступ запрещен")
+        raise HTTPException(status_code=404, detail="Абонент не найден")
 
-    subscriber.balance = float(Decimal(str(subscriber.balance)) + Decimal(str(payload.amount)))
+    subscriber.balance += payload.amount
     db.commit()
 
     background_tasks.add_task(notify_devices, account_number, SessionLocal)
-    return {"account_number": account_number, "new_balance": float(subscriber.balance)}
+    return {"account_number": account_number, "new_balance": subscriber.balance}
 
 
 async def notify_devices(account_number: str, db_session_factory):
@@ -315,6 +315,7 @@ async def notify_devices(account_number: str, db_session_factory):
                     db.commit()
                     await send_command(client, device.imei, action)
     except Exception as e:
+        db.rollback()
         print(f"Ошибка MQTT уведомления: {e}")
     finally:
         db.close()
@@ -364,6 +365,10 @@ async def update_device_config(
     device = crud.get_device(db, imei, user)
     if not device:
         raise HTTPException(status_code=404, detail="Устройство не найдено")
+
+    if config.manual_control is not None:
+        device.manual_control = config.manual_control
+        crud.log_audit(db, operator_id=user.id, imei=imei, action=f"Установлен manual_control: {config.manual_control}")
 
     if config.hb_interval is not None:
         device.hb_interval = config.hb_interval
@@ -536,10 +541,14 @@ def get_subscriber_audit(
 
 @api_router.post("/mqtt/auth")
 async def emqx_auth(
+        clientid: str = Form(...),
         username: str = Form(...),
         password: str = Form(...),
         db: Session = Depends(get_db)
 ):
+    if clientid != username and username != settings.MQTT_USER:
+        raise HTTPException(status_code=401, detail="deny")
+
     if username == settings.MQTT_USER and password == settings.MQTT_PASSWORD:
         return {"result": "allow", "is_superuser": True}
 

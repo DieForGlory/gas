@@ -2,6 +2,11 @@ from pydantic import BaseModel, Field, model_validator, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from app.models import ContractStatus, AuthStatus, Role
+from decimal import Decimal
+from typing import Optional
+
+class BalanceUpdate(BaseModel):
+    amount: Decimal
 
 class RegionBase(BaseModel):
     name: str
@@ -52,6 +57,7 @@ class DeviceCreate(DeviceBase):
 class DeviceUpdate(BaseModel):
     hb_interval: Optional[int] = Field(None, ge=10, le=3600)
     valve_type: Optional[int] = None
+    manual_control: Optional[bool] = None
 
 class DeviceOut(DeviceCreate):
     last_online: Optional[datetime] = None
@@ -77,7 +83,7 @@ class SubscriberCreate(SubscriberBase):
     account_number: str
 
 class SubscriberOut(SubscriberCreate):
-    balance: float
+    balance: Decimal
     contract_status: ContractStatus
     devices: List[DeviceOut] = []
     district: Optional[DistrictNested] = None

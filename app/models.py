@@ -4,6 +4,7 @@ from datetime import datetime
 import enum
 from app.core.database import Base
 from datetime import timedelta, timezone
+from sqlalchemy import Numeric
 
 class Role(enum.Enum):
     ADMIN = "ADMIN"
@@ -73,7 +74,7 @@ class Subscriber(Base):
     address = Column(String)
     inn = Column(String, nullable=True)
     district_id = Column(Integer, ForeignKey("districts.id"), nullable=False)
-    balance = Column(Float, default=0.0)
+    balance = Column(Numeric(12, 2), default=0.00)
     contract_status = Column(Enum(ContractStatus), default=ContractStatus.ACTIVE)
     contact_person = Column(String, nullable=True)
     phone = Column(String, nullable=True)

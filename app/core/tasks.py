@@ -37,8 +37,10 @@ async def process_device_retries():
 
                 # Общий лимит попыток для всех типов команд (включая конфигурации)
                 if device.command_retries >= 5:
-                    device.error_flag = 1
-                    device.manual_control = True
+                    if device.pending_command in ["OPEN", "CLOSE"]:
+                        device.error_flag = 1
+                        device.manual_control = True
+
                     device.pending_command = None
                     device.command_retries = 0
                     db.commit()

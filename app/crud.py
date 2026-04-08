@@ -1,5 +1,6 @@
 import hashlib
 import secrets
+from app.core.security import pwd_context
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from . import models, schemas
@@ -80,15 +81,15 @@ def create_device(db: Session, device: schemas.DeviceCreate):
         db.rollback()
         return None
 
+
 def generate_provisioning_key(db: Session, imei: str) -> str | None:
     db_device = get_device(db, imei)
     if not db_device or db_device.auth_status not in [models.AuthStatus.NEW, models.AuthStatus.PROVISIONING]:
         return None
 
-    new_key = secrets.token_hex(8)
-    key_hash = hashlib.sha256(new_key.encode()).hexdigest()
+    new_key = secrets.token_hex(16)
+    db_device.secret_key_hash = pwd_context.hash(new_key)
 
-    db_device.secret_key_hash = key_hash
     db_device.auth_status = models.AuthStatus.PROVISIONING
     db.commit()
 

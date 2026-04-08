@@ -1,4 +1,5 @@
 import json
+import asyncio
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from aiomqtt import Client
@@ -11,7 +12,7 @@ async def handle_status_message(payload: str, topic: str, db: Session, mqtt_clie
 
     clean_payload = payload.replace(" ", "").strip().strip('"').strip("'")
     if clean_payload in ["OPENED_OK", "HB_SET_OK", "VTYPE_SET_OK"]:
-        device = crud.get_device(db, imei)
+        device = await asyncio.to_thread(crud.get_device, db, imei)
         if device:
             device.pending_command = None
             device.command_retries = 0
@@ -19,7 +20,7 @@ async def handle_status_message(payload: str, topic: str, db: Session, mqtt_clie
                 device.state_l = 1
                 device.state_r = 1
                 device.state_p = 0
-            db.commit()
+            await asyncio.to_thread(db.commit)
         return
 
     try:
@@ -28,11 +29,10 @@ async def handle_status_message(payload: str, topic: str, db: Session, mqtt_clie
         print(f"[MQTT] Parse error {imei}: {e} | Payload: {payload}")
         return
 
-    device = crud.get_device(db, imei)
+    device = await asyncio.to_thread(crud.get_device, db, imei)
     if not device:
         return
 
-    # Активация статуса устройства при получении валидной телеметрии
     if device.auth_status != models.AuthStatus.ACTIVE:
         device.auth_status = models.AuthStatus.ACTIVE
 
@@ -50,25 +50,22 @@ async def handle_status_message(payload: str, topic: str, db: Session, mqtt_clie
     if data.err == 1:
         device.manual_control = True
 
-    db.commit()
+    await asyncio.to_thread(db.commit)
 
-    # Если в очереди находится JSON-команда (настройка), биллинг не должен её перезаписывать
     if device.pending_command and ("{" in device.pending_command):
         return
 
-    action = crud.check_billing_automation(db, imei)
+    action = await asyncio.to_thread(crud.check_billing_automation, db, imei)
     if action:
-        # Проверка актуальности: не отправляем команду, если состояние уже соответствует целевому
         is_redundant = (
                 (action == "CLOSE" and device.state_l == 0 and device.state_r == 0) or
                 (action == "OPEN" and device.state_l == 1 and device.state_r == 1)
         )
 
-        # Обновляем очередь только если состояние не достигнуто и команда еще не установлена
         if not is_redundant and device.pending_command != action:
             device.pending_command = action
             device.command_retries = 0
-            db.commit()
+            await asyncio.to_thread(db.commit)
             await send_command(mqtt_client, imei, action)
 
 
@@ -77,7 +74,7 @@ async def handle_provision_request(payload: str, topic: str, db: Session, mqtt_c
         return
 
     imei = topic.split("/")[-2]
-    new_key = crud.generate_provisioning_key(db, imei)
+    new_key = await asyncio.to_thread(crud.generate_provisioning_key, db, imei)
 
     if new_key:
         response = json.dumps({"cmd": "PROVISION", "new_key": new_key}, separators=(',', ':'))
