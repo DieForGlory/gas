@@ -24,9 +24,12 @@ const SubscriberDevices = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-        {[...subscriber.devices].sort((a, b) => a.imei.localeCompare(b.imei)).map(device => (
-          <DeviceCard key={dev.imei} device={dev} onUpdate={refresh} />
+        {[...subscriber.devices]
+          .sort((a, b) => String(a.imei).localeCompare(String(b.imei)))
+          .map(device => (
+            <DeviceCard key={device.imei} device={device} onUpdate={refresh} />
         ))}
+
         {subscriber.devices.length === 0 && (
            <div className="col-span-full py-16 text-center text-slate-400 font-bold border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
              Нет привязанных устройств
