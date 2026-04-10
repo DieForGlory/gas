@@ -40,9 +40,8 @@ const DeviceCard = ({ device, onUpdate }) => {
   };
 
   const getSignalPercentage = (s) => {
-    if (!s) return 0;
-    const pct = Math.round((s / 31) * 100);
-    return pct > 100 ? 100 : pct;
+    if (s === null || s === undefined) return 0;
+    return s > 100 ? 100 : s < 0 ? 0 : s;
   };
 
   const formatLastOnline = (dateString) => {
