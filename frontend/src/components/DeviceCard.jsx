@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ServiceModal from './ServiceModal';
-import TelemetryModal from './TelemetryModal'; // Импорт нового компонента
+import TelemetryModal from './TelemetryModal';
 
 const DeviceCard = ({ device, onUpdate }) => {
   const { t } = useTranslation();
@@ -18,7 +18,7 @@ const DeviceCard = ({ device, onUpdate }) => {
   const [loadingCmd, setLoadingCmd] = useState('');
 
   const [showServiceModal, setShowServiceModal] = useState(false);
-  const [showTelemetry, setShowTelemetry] = useState(false); // Состояние модалки логов
+  const [showTelemetry, setShowTelemetry] = useState(false);
 
   const prevPending = useRef(device.pending_command);
   const serviceRequestedRef = useRef(false);
@@ -55,7 +55,7 @@ const DeviceCard = ({ device, onUpdate }) => {
       await deviceService.update(device.imei, payload);
       onUpdate();
     } catch (err) {
-      alert('Ошибка обновления конфигурации');
+      alert(t('Ошибка обновления конфигурации'));
     }
   };
 
@@ -68,7 +68,7 @@ const DeviceCard = ({ device, onUpdate }) => {
       }
       onUpdate();
     } catch (err) {
-      alert('Ошибка отправки команды');
+      alert(t('Ошибка отправки команды'));
     } finally {
       setLoadingCmd('');
     }
@@ -95,8 +95,16 @@ const DeviceCard = ({ device, onUpdate }) => {
             <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
           </div>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            {device.subscriber_account || 'Без привязки'}
+            {device.subscriber_account || t('Без привязки')}
           </p>
+          <div className="flex items-center gap-1 mt-2">
+            <Clock size={12} className="text-slate-400" />
+            <span className="text-[10px] font-bold text-slate-400 uppercase">
+              {device.last_online
+                ? new Date(device.last_online).toLocaleString('ru-RU', { timeZone: 'Asia/Tashkent' })
+                : t('Никогда не был в сети')}
+            </span>
+          </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-2xl border border-slate-100">
@@ -112,18 +120,31 @@ const DeviceCard = ({ device, onUpdate }) => {
         </div>
       </div>
 
-      {/* States */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${device.state_l === 1 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Клапан L</span>
-          <span className={`text-sm font-black ${device.state_l === 1 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {device.state_l === 1 ? 'ОТКРЫТ' : 'ЗАКРЫТ'}
+      {/* Ожидание команд и кнопки */}
+      {device.pending_command && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between">
+            <span className="text-xs font-bold text-blue-700">
+              {t('Ожидает команду')}
+            </span>
+            <Loader2 size={14} className="text-blue-500 animate-spin" />
+          </div>
+        )}
+
+      {device.state_p === 1 && (
+        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between">
+          <span className="text-xs font-bold text-amber-700">
+            {t('Ожидание нажатия кнопки на устройстве!')}
           </span>
+          <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
         </div>
-        <div className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${device.state_r === 1 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Клапан R</span>
-          <span className={`text-sm font-black ${device.state_r === 1 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {device.state_r === 1 ? 'ОТКРЫТ' : 'ЗАКРЫТ'}
+      )}
+
+      {/* State - ОДИН КЛАПАН */}
+      <div className="mb-6">
+        <div className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${device.state_l === 1 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{t('КЛАПАН')}</span>
+          <span className={`text-lg font-black ${device.state_l === 1 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {device.state_l === 1 ? t('ОТКРЫТ') : t('ЗАКРЫТ')}
           </span>
         </div>
       </div>
@@ -136,14 +157,14 @@ const DeviceCard = ({ device, onUpdate }) => {
             onClick={() => sendCommand('OPEN')}
             className="flex-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-100 text-white font-bold py-3 rounded-2xl shadow-lg shadow-emerald-200/50 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest"
           >
-            {loadingCmd === 'OPEN' ? <Loader2 size={16} className="animate-spin" /> : 'ОТКРЫТЬ'}
+            {loadingCmd === 'OPEN' ? <Loader2 size={16} className="animate-spin" /> : t('ОТКРЫТЬ')}
           </button>
           <button
             disabled={loadingCmd === 'CLOSE' || !isOnline}
             onClick={() => sendCommand('CLOSE')}
             className="flex-1 bg-rose-500 hover:bg-rose-600 disabled:bg-slate-100 text-white font-bold py-3 rounded-2xl shadow-lg shadow-rose-200/50 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest"
           >
-            {loadingCmd === 'CLOSE' ? <Loader2 size={16} className="animate-spin" /> : 'ЗАКРЫТЬ'}
+            {loadingCmd === 'CLOSE' ? <Loader2 size={16} className="animate-spin" /> : t('ЗАКРЫТЬ')}
           </button>
         </div>
 
@@ -153,14 +174,14 @@ const DeviceCard = ({ device, onUpdate }) => {
             onClick={() => sendCommand('STATUS')}
             className="flex-1 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-100 text-white font-bold py-2.5 rounded-2xl transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest"
           >
-            {loadingCmd === 'STATUS' ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />} Статус
+            {loadingCmd === 'STATUS' ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />} {t('Статус')}
           </button>
           <button
             disabled={loadingCmd === 'SERVICE' || !isOnline}
             onClick={() => sendCommand('SERVICE')}
             className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-100 text-white font-bold py-2.5 rounded-2xl transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest"
           >
-            {loadingCmd === 'SERVICE' ? <Loader2 size={14} className="animate-spin" /> : <Wrench size={14} />} Сервис
+            {loadingCmd === 'SERVICE' ? <Loader2 size={14} className="animate-spin" /> : <Wrench size={14} />} {t('Сервис')}
           </button>
         </div>
       </div>
@@ -172,14 +193,13 @@ const DeviceCard = ({ device, onUpdate }) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <Settings2 size={12} /> Конфигурация
+                  <Settings2 size={12} /> {t('Конфигурация')}
                 </span>
-                {/* Кнопка "Сырые логи" для Админа */}
                 <button
                   onClick={() => setShowTelemetry(true)}
                   className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-[10px] font-bold uppercase tracking-tighter"
                 >
-                  <Database size={10} /> Логи ответа
+                  <Database size={10} /> {t('Логи ответа')}
                 </button>
               </div>
 
@@ -201,7 +221,7 @@ const DeviceCard = ({ device, onUpdate }) => {
                     syncSuccess.hb ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  {syncSuccess.hb ? <CheckCircle2 size={16} /> : isHbPending ? <Loader2 size={14} className="animate-spin" /> : 'Интервал'}
+                  {syncSuccess.hb ? <CheckCircle2 size={16} /> : isHbPending ? <Loader2 size={14} className="animate-spin" /> : t('Интервал')}
                 </button>
               </div>
 
@@ -223,7 +243,7 @@ const DeviceCard = ({ device, onUpdate }) => {
                     syncSuccess.vType ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  {syncSuccess.vType ? <CheckCircle2 size={16} /> : isVTypePending ? <Loader2 size={14} className="animate-spin" /> : 'Тип'}
+                  {syncSuccess.vType ? <CheckCircle2 size={16} /> : isVTypePending ? <Loader2 size={14} className="animate-spin" /> : t('Тип')}
                 </button>
               </div>
             </div>
@@ -237,7 +257,7 @@ const DeviceCard = ({ device, onUpdate }) => {
               type="text"
               value={sim}
               onChange={(e) => setSim(e.target.value)}
-              placeholder="SIM номер"
+              placeholder={t('SIM номер')}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm font-mono font-bold outline-none focus:border-blue-400 transition-colors"
             />
           </div>
@@ -245,26 +265,25 @@ const DeviceCard = ({ device, onUpdate }) => {
             onClick={() => updateConfig({ sim_number: sim })}
             className="px-3 text-[10px] uppercase tracking-widest bg-slate-100 text-slate-600 font-black rounded-xl hover:bg-slate-200"
           >
-            Обновить SIM
+            {t('Обновить SIM')}
           </button>
         </div>
 
         {isAdmin && (
           <button
             onClick={async () => {
-              if (window.confirm('Сбросить ключи шифрования для этого устройства?')) {
+              if (window.confirm(t('Сбросить ключи шифрования для этого устройства?'))) {
                 await deviceService.resetKey(device.imei);
                 onUpdate();
               }
             }}
             className="w-full flex items-center justify-center gap-2 py-2 text-[10px] font-bold text-rose-500 hover:bg-rose-50 rounded-xl transition-colors uppercase tracking-widest border border-transparent hover:border-rose-100"
           >
-            <RefreshCcw size={12} /> Сброс ключей
+            <RefreshCcw size={12} /> {t('Сброс ключей')}
           </button>
         )}
       </div>
 
-      {/* Modals */}
       {showServiceModal && (
         <ServiceModal
           device={device}

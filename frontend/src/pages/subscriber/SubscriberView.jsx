@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { subscriberService } from '../../services/api';
 import { ArrowLeft, Server, History, Settings, Hash } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const SubscriberView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [subscriber, setSubscriber] = useState(null);
+  const { t } = useTranslation();
 
   const fetchSubscriber = async () => {
     try {
@@ -39,13 +41,13 @@ const SubscriberView = () => {
       <div className="overflow-x-auto custom-scrollbar bg-white rounded-xl border border-slate-200 px-2 sm:px-4">
         <div className="flex gap-4 sm:gap-6 min-w-max">
           <NavLink to="" end className={({isActive}) => `py-4 flex items-center gap-2 font-bold text-sm border-b-2 transition-colors ${isActive ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-            <Server size={18}/> Устройства
+            <Server size={18}/> {t('Устройства')}
           </NavLink>
           <NavLink to="logs" className={({isActive}) => `py-4 flex items-center gap-2 font-bold text-sm border-b-2 transition-colors ${isActive ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-            <History size={18}/> Журнал аудита
+            <History size={18}/> {t('Журнал аудита')}
           </NavLink>
           <NavLink to="settings" className={({isActive}) => `py-4 flex items-center gap-2 font-bold text-sm border-b-2 transition-colors ${isActive ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-            <Settings size={18}/> Управление данными
+            <Settings size={18}/> {t('Управление данными')}
           </NavLink>
         </div>
       </div>
