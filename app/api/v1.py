@@ -29,6 +29,8 @@ from app.core.security import verify_password, get_password_hash, create_access_
 from app.models import User, Role
 from app.mqtt.handlers import send_command
 from app.schemas import FirmwareOut, BulkOTA
+from fastapi import HTTPException, Depends
+from sqlalchemy.orm import Session
 
 api_router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
@@ -906,3 +908,27 @@ def get_all_devices(
         admin: models.User = Depends(require_admin)
 ):
     return db.query(models.Device).all()
+
+@api_router.patch("/users/{user_id}", response_model=schemas.UserResponse)
+def update_user(
+    user_id: int,
+    user_in: schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin)
+):
+    user = crud.get_user(db, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Not Found")
+    return crud.update_user(db=db, db_user=user, user=user_in)
+
+@api_router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin)
+):
+    user = crud.get_user(db, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Not Found")
+    crud.delete_user(db=db, user_id=user_id)
+    return {"status": "deleted"}

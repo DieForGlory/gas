@@ -71,7 +71,8 @@ const UsersPage = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await userService.create(newUser);
+      const payload = { ...newUser, username: newUser.username.trim().toLowerCase() };
+      await userService.create(payload);
       setNewUser({ username: '', password: '', role: 'ADMIN', full_name: '', phone: '', region_id: null, district_id: null });
       setSelectedRegionNewUser('');
       fetchUsers();

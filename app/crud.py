@@ -165,6 +165,27 @@ def create_valve_type(db: Session, vt: schemas.ValveTypeCreate):
         db.rollback()
         return None
 
+def get_user(db: Session, user_id: int):
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+def update_user(db: Session, db_user: models.User, user: schemas.UserUpdate):
+    update_data = user.dict(exclude_unset=True)
+    if "password" in update_data:
+        update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
+
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+def delete_user(db: Session, user_id: int):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    db.delete(db_user)
+    db.commit()
+
 def update_valve_type(db: Session, db_vt: models.ValveType, vt_in: schemas.ValveTypeCreate):
     db_vt.name = vt_in.name
     db_vt.response_time = vt_in.response_time
