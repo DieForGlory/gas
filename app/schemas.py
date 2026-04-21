@@ -4,6 +4,7 @@ from typing import Any, Dict, Union
 from typing import List
 from typing import Optional
 from pydantic import BaseModel, Field, model_validator, ConfigDict
+
 from app.models import ContractStatus, AuthStatus, Role
 
 
@@ -165,7 +166,13 @@ class StatusPayload(BaseModel):
 class ProvisionPayload(BaseModel):
     cmd: str = "PROVISION"
     new_key: str
-
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    password: Optional[str] = None
+    role: Optional[Role] = None
+    region_id: Optional[int] = None
+    district_id: Optional[int] = None
 class FirmwareOut(BaseModel):
     id: int
     version: str
