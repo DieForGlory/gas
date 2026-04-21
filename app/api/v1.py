@@ -909,7 +909,7 @@ def get_all_devices(
 ):
     return db.query(models.Device).all()
 
-@api_router.patch("/users/{user_id}", response_model=schemas.UserResponse)
+@api_router.patch("/users/{user_id}", response_model=schemas.UserOut)
 def update_user(
     user_id: int,
     user_in: schemas.UserUpdate,
