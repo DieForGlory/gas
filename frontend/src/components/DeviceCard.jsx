@@ -26,6 +26,13 @@ const DeviceCard = ({ device, onUpdate }) => {
 
   const isOnline = device.is_online;
 
+  const formatTime = (dateStr) => {
+    if (!dateStr) return t('Никогда не был в сети');
+    const normalized = dateStr.replace(' ', 'T');
+    const utcStr = normalized.endsWith('Z') || normalized.includes('+') ? normalized : normalized + 'Z';
+    return new Date(utcStr).toLocaleString('ru-RU', { timeZone: 'Asia/Tashkent' });
+  };
+
   const getRole = () => {
     try {
       const token = localStorage.getItem('token');
@@ -49,6 +56,23 @@ const DeviceCard = ({ device, onUpdate }) => {
     }
     prevPending.current = device.pending_command;
   }, [device.pending_command]);
+
+  const onUpdateRef = useRef(onUpdate);
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+
+  useEffect(() => {
+    let pollTimer;
+    if (device.pending_command || device.state_p === 1) {
+      pollTimer = setInterval(() => {
+        if (onUpdateRef.current) onUpdateRef.current();
+      }, 2000);
+    }
+    return () => {
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, [device.pending_command, device.state_p]);
 
   const updateConfig = async (payload) => {
     try {
@@ -87,7 +111,6 @@ const DeviceCard = ({ device, onUpdate }) => {
   return (
     <div className={`relative overflow-hidden bg-white border ${isOnline ? 'border-slate-200' : 'border-slate-100 opacity-80'} rounded-3xl p-5 transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/50 group`}>
 
-      {/* Header & Status */}
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -100,9 +123,7 @@ const DeviceCard = ({ device, onUpdate }) => {
           <div className="flex items-center gap-1 mt-2">
             <Clock size={12} className="text-slate-400" />
             <span className="text-[10px] font-bold text-slate-400 uppercase">
-              {device.last_online
-                ? new Date(device.last_online).toLocaleString('ru-RU', { timeZone: 'Asia/Tashkent' })
-                : t('Никогда не был в сети')}
+              {formatTime(device.last_online)}
             </span>
           </div>
         </div>
@@ -120,15 +141,14 @@ const DeviceCard = ({ device, onUpdate }) => {
         </div>
       </div>
 
-      {/* Ожидание команд и кнопки */}
       {device.pending_command && (
-          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between">
-            <span className="text-xs font-bold text-blue-700">
-              {t('Ожидает команду')}
-            </span>
-            <Loader2 size={14} className="text-blue-500 animate-spin" />
-          </div>
-        )}
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between">
+          <span className="text-xs font-bold text-blue-700">
+            {t('Ожидает команду')}
+          </span>
+          <Loader2 size={14} className="text-blue-500 animate-spin" />
+        </div>
+      )}
 
       {device.state_p === 1 && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between">
@@ -139,7 +159,6 @@ const DeviceCard = ({ device, onUpdate }) => {
         </div>
       )}
 
-      {/* State - ОДИН КЛАПАН */}
       <div className="mb-6">
         <div className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${device.state_l === 1 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{t('КЛАПАН')}</span>
@@ -149,7 +168,6 @@ const DeviceCard = ({ device, onUpdate }) => {
         </div>
       </div>
 
-      {/* Main Controls */}
       <div className="space-y-3 mb-6">
         <div className="flex gap-2">
           <button
@@ -186,68 +204,65 @@ const DeviceCard = ({ device, onUpdate }) => {
         </div>
       </div>
 
-      {/* Admin Settings Section */}
       <div className="pt-6 border-t border-slate-100 space-y-4">
         {isAdmin && (
-          <>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <Settings2 size={12} /> {t('Конфигурация')}
-                </span>
-                <button
-                  onClick={() => setShowTelemetry(true)}
-                  className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-[10px] font-bold uppercase tracking-tighter"
-                >
-                  <Database size={10} /> {t('Логи ответа')}
-                </button>
-              </div>
-
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="number"
-                    value={hb}
-                    onChange={(e) => setHb(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm font-bold outline-none focus:border-blue-400 transition-colors"
-                    placeholder="HB (сек)"
-                  />
-                </div>
-                <button
-                  disabled={isHbPending}
-                  onClick={() => updateConfig({ hb_interval: parseInt(hb) })}
-                  className={`px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
-                    syncSuccess.hb ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {syncSuccess.hb ? <CheckCircle2 size={16} /> : isHbPending ? <Loader2 size={14} className="animate-spin" /> : t('Интервал')}
-                </button>
-              </div>
-
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  <select
-                    value={vType}
-                    onChange={(e) => setVType(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none appearance-none focus:border-blue-400 transition-colors"
-                  >
-                    {valveTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
-                </div>
-                <button
-                  disabled={isVTypePending}
-                  onClick={() => updateConfig({ valve_type: parseInt(vType) })}
-                  className={`px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
-                    syncSuccess.vType ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {syncSuccess.vType ? <CheckCircle2 size={16} /> : isVTypePending ? <Loader2 size={14} className="animate-spin" /> : t('Тип')}
-                </button>
-              </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Settings2 size={12} /> {t('Конфигурация')}
+              </span>
+              <button
+                onClick={() => setShowTelemetry(true)}
+                className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-[10px] font-bold uppercase tracking-tighter"
+              >
+                <Database size={10} /> {t('Логи ответа')}
+              </button>
             </div>
-          </>
+
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="number"
+                  value={hb}
+                  onChange={(e) => setHb(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm font-bold outline-none focus:border-blue-400 transition-colors"
+                  placeholder="HB (сек)"
+                />
+              </div>
+              <button
+                disabled={isHbPending}
+                onClick={() => updateConfig({ hb_interval: parseInt(hb) })}
+                className={`px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+                  syncSuccess.hb ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {syncSuccess.hb ? <CheckCircle2 size={16} /> : isHbPending ? <Loader2 size={14} className="animate-spin" /> : t('Интервал')}
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <select
+                  value={vType}
+                  onChange={(e) => setVType(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none appearance-none focus:border-blue-400 transition-colors"
+                >
+                  {valveTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+              <button
+                disabled={isVTypePending}
+                onClick={() => updateConfig({ valve_type: parseInt(vType) })}
+                className={`px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+                  syncSuccess.vType ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {syncSuccess.vType ? <CheckCircle2 size={16} /> : isVTypePending ? <Loader2 size={14} className="animate-spin" /> : t('Тип')}
+              </button>
+            </div>
+          </div>
         )}
 
         <div className="flex gap-2">

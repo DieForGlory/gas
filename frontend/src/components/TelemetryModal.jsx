@@ -10,6 +10,13 @@ export default function TelemetryModal({ imei, onClose }) {
     const [hasMore, setHasMore] = useState(true);
     const LIMIT = 50;
 
+    const formatTimestamp = (ts) => {
+        if (!ts) return '';
+        const normalized = ts.replace(' ', 'T');
+        const utcStr = normalized.endsWith('Z') || normalized.includes('+') ? normalized : normalized + 'Z';
+        return new Date(utcStr).toLocaleString('ru-RU', { timeZone: 'Asia/Tashkent' });
+    };
+
     const fetchLogs = async (currentSkip) => {
         setLoading(true);
         try {
@@ -51,7 +58,7 @@ export default function TelemetryModal({ imei, onClose }) {
                                 <div key={log.id} className="bg-white p-3 border rounded shadow-sm text-sm">
                                     <div className="flex justify-between text-xs text-gray-500 mb-2 border-b pb-1">
                                         <span className="font-mono text-blue-600">{log.topic}</span>
-                                        <span>{new Date(log.timestamp).toLocaleString('ru-RU', { timeZone: 'Asia/Tashkent' })}</span>
+                                        <span>{formatTimestamp(log.timestamp)}</span>
                                     </div>
                                     <pre className="whitespace-pre-wrap font-mono text-xs overflow-x-auto text-gray-800">
                                         {JSON.stringify(log.payload, null, 2)}

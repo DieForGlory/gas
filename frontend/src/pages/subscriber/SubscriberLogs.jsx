@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { subscriberService } from '../../services/api';
 import { Clock, User, Hash, Activity, X, Phone, Shield } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // Добавлен импорт
 
 const SubscriberLogs = () => {
+  const { t } = useTranslation(); // Инициализация
   const { subscriber } = useOutletContext();
   const [logs, setLogs] = useState([]);
   const [selectedOperator, setSelectedOperator] = useState(null);
@@ -25,10 +27,10 @@ const SubscriberLogs = () => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col animate-in fade-in duration-300 relative">
       <div className="hidden lg:grid grid-cols-12 gap-4 p-4 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-        <div className="col-span-3">Время (GMT+5)</div>
-        <div className="col-span-3">Оператор</div>
-        <div className="col-span-3">IMEI</div>
-        <div className="col-span-3">Действие</div>
+        <div className="col-span-3">{t('Время (GMT+5)')}</div>
+        <div className="col-span-3">{t('Оператор')}</div>
+        <div className="col-span-3">{t('IMEI')}</div>
+        <div className="col-span-3">{t('Действие')}</div>
       </div>
 
       <div className="divide-y divide-slate-100">
@@ -70,7 +72,7 @@ const SubscriberLogs = () => {
 
       {logs.length === 0 && (
         <div className="py-16 text-center text-slate-400 font-bold italic">
-          Записи отсутствуют
+          {t('Записи отсутствуют')}
         </div>
       )}
 
@@ -78,7 +80,7 @@ const SubscriberLogs = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
-              <h3 className="font-bold text-slate-800">Данные оператора</h3>
+              <h3 className="font-bold text-slate-800">{t('Данные оператора')}</h3>
               <button onClick={() => setSelectedOperator(null)} className="text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 p-1.5 rounded-full transition-colors">
                 <X size={16} />
               </button>
@@ -89,7 +91,7 @@ const SubscriberLogs = () => {
                   {(selectedOperator.full_name || selectedOperator.username).charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div className="font-bold text-slate-800">{selectedOperator.full_name || 'ФИО не указано'}</div>
+                  <div className="font-bold text-slate-800">{selectedOperator.full_name || t('ФИО не указано')}</div>
                   <div className="text-xs font-mono text-slate-500">@{selectedOperator.username}</div>
                 </div>
               </div>
@@ -98,13 +100,13 @@ const SubscriberLogs = () => {
                 <div className="flex items-center gap-3 text-sm">
                   <Shield size={16} className="text-slate-400" />
                   <span className="text-slate-600 font-medium">
-                    {selectedOperator.role === 'ADMIN' ? 'Администратор' : selectedOperator.role === 'REGIONAL' ? 'Региональный менеджер' : 'Локальный оператор'}
+                    {selectedOperator.role === 'ADMIN' ? t('Администратор') : selectedOperator.role === 'REGIONAL' ? t('Региональный менеджер') : t('Локальный оператор')}
                   </span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <Phone size={16} className="text-slate-400" />
                   <span className="text-slate-600 font-medium">
-                    {selectedOperator.phone || 'Телефон не указан'}
+                    {selectedOperator.phone || t('Телефон не указан')}
                   </span>
                 </div>
               </div>

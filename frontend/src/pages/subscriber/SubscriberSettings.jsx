@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { subscriberService } from '../../services/api';
 import { Save, Building2, MapPin, User, Phone, FileText, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // Добавлен импорт
 
 const SubscriberSettings = () => {
-  // Получаем абонента и функцию обновления из родительского компонента SubscriberView
+  const { t } = useTranslation(); // Инициализация
   const { subscriber, refresh } = useOutletContext();
 
   const [formData, setFormData] = useState({
@@ -37,14 +38,13 @@ const SubscriberSettings = () => {
     setLoading(true);
     setMessage({ type: '', text: '' });
     try {
-      // Используем account_number вместо id
       await subscriberService.update(subscriber.account_number, formData);
-      setMessage({ type: 'success', text: 'Настройки успешно обновлены' });
-      if (refresh) refresh(); // Обновляем глобальные данные абонента
+      setMessage({ type: 'success', text: t('Настройки успешно обновлены') });
+      if (refresh) refresh();
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error.response?.data?.detail || 'Ошибка сохранения данных'
+        text: error.response?.data?.detail || t('Ошибка сохранения данных')
       });
     } finally {
       setLoading(false);
@@ -59,7 +59,7 @@ const SubscriberSettings = () => {
         <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
           <Building2 size={20} />
         </div>
-        <h2 className="text-lg font-bold text-slate-800">Настройки абонента</h2>
+        <h2 className="text-lg font-bold text-slate-800">{t('Настройки абонента')}</h2>
       </div>
 
       {message.text && (
@@ -75,7 +75,7 @@ const SubscriberSettings = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 mb-2">
-              Наименование (ФИО)
+              {t('Наименование (ФИО)')}
             </label>
             <div className="relative">
               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -91,7 +91,7 @@ const SubscriberSettings = () => {
 
           <div>
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 mb-2">
-              ИНН
+              {t('ИНН')}
             </label>
             <div className="relative">
               <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -106,7 +106,7 @@ const SubscriberSettings = () => {
 
           <div className="md:col-span-2">
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 mb-2">
-              Адрес объекта
+              {t('Адрес объекта')}
             </label>
             <div className="relative">
               <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -121,7 +121,7 @@ const SubscriberSettings = () => {
 
           <div>
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 mb-2">
-              Контактное лицо
+              {t('Контактное лицо')}
             </label>
             <div className="relative">
               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -136,7 +136,7 @@ const SubscriberSettings = () => {
 
           <div>
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 mb-2">
-              Телефон
+              {t('Телефон')}
             </label>
             <div className="relative">
               <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -152,15 +152,15 @@ const SubscriberSettings = () => {
 
         <div className="space-y-2 pt-4 border-t border-slate-100">
           <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">
-            Статус обслуживания
+            {t('Статус обслуживания')}
           </label>
           <select
             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all font-bold text-slate-800 text-sm appearance-none cursor-pointer"
             value={formData.contract_status}
             onChange={e => setFormData({...formData, contract_status: e.target.value})}
           >
-            <option value="ACTIVE">Активен (Виден всем)</option>
-            <option value="SUSPENDED">Приостановлен (Скрыт от Level 2/3)</option>
+            <option value="ACTIVE">{t('Активен (Виден всем)')}</option>
+            <option value="SUSPENDED">{t('Приостановлен (Скрыт от Level 2/3)')}</option>
           </select>
         </div>
 
@@ -171,7 +171,7 @@ const SubscriberSettings = () => {
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save size={16} />
-            {loading ? 'СОХРАНЕНИЕ...' : 'СОХРАНИТЬ ИЗМЕНЕНИЯ'}
+            {loading ? t('СОХРАНЕНИЕ...') : t('СОХРАНИТЬ ИЗМЕНЕНИЯ')}
           </button>
         </div>
       </form>

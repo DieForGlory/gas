@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { valveTypeService } from '../services/api';
 import { Settings, Plus, Activity, Trash2, Edit2, Check, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // Добавлен импорт
 
 const ValveTypesPage = () => {
+  const { t } = useTranslation(); // Инициализация
   const [types, setTypes] = useState([]);
   const [newType, setNewType] = useState({ id: '', name: '', response_time: 1000 });
   const [editingId, setEditingId] = useState(null);
@@ -24,7 +26,7 @@ const ValveTypesPage = () => {
       setNewType({ id: '', name: '', response_time: 1000 });
       fetchTypes();
     } catch (error) {
-      alert(error.response?.data?.detail || 'Ошибка создания');
+      alert(error.response?.data?.detail || t('Ошибка создания'));
     }
   };
 
@@ -34,17 +36,17 @@ const ValveTypesPage = () => {
       setEditingId(null);
       fetchTypes();
     } catch (error) {
-      alert(error.response?.data?.detail || 'Ошибка обновления');
+      alert(error.response?.data?.detail || t('Ошибка обновления'));
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Удаление невозможно, если тип используется устройствами. Продолжить?')) return;
+    if (!window.confirm(t('Удаление невозможно, если тип используется устройствами. Продолжить?'))) return;
     try {
       await valveTypeService.delete(id);
       fetchTypes();
     } catch (error) {
-      alert(error.response?.data?.detail || 'Ошибка удаления');
+      alert(error.response?.data?.detail || t('Ошибка удаления'));
     }
   };
 
@@ -54,34 +56,34 @@ const ValveTypesPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="bg-slate-900 p-2.5 rounded-xl"><Settings className="text-white" size={24} /></div>
-          <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">Типы клапанов</h2>
+          <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">{t('Типы клапанов')}</h2>
         </div>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
         <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">ID Типа</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">{t('ID Типа')}</label>
             <input required type="number" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 transition-all text-sm font-bold" value={newType.id} onChange={e => setNewType({...newType, id: e.target.value})} />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Название</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">{t('Название')}</label>
             <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 transition-all text-sm font-bold" value={newType.name} onChange={e => setNewType({...newType, name: e.target.value})} />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Отклик (мс)</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">{t('Отклик (мс)')}</label>
             <input required type="number" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-500 transition-all text-sm font-bold" value={newType.response_time} onChange={e => setNewType({...newType, response_time: e.target.value})} />
           </div>
           <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl flex justify-center items-center gap-2 text-sm transition-all shadow-sm">
-            <Plus size={18} /> Добавить
+            <Plus size={18} /> {t('Добавить')}
           </button>
         </form>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
         <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-4 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-          <div className="col-span-10">Конфигурация типа</div>
-          <div className="col-span-2 text-right">Управление</div>
+          <div className="col-span-10">{t('Конфигурация типа')}</div>
+          <div className="col-span-2 text-right">{t('Управление')}</div>
         </div>
         <div className="divide-y divide-slate-100">
           {types.map(vt => (
@@ -97,7 +99,7 @@ const ValveTypesPage = () => {
                   <span className="font-bold text-slate-800 text-sm">
                     <span className="text-slate-400 font-mono mr-2">#{vt.id}</span>
                     {vt.name}
-                    <span className="ml-3 text-[10px] bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md text-slate-600 font-mono">{vt.response_time} мс</span>
+                    <span className="ml-3 text-[10px] bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md text-slate-600 font-mono">{vt.response_time} {t('мс')}</span>
                   </span>
                 </div>
               )}
@@ -116,7 +118,7 @@ const ValveTypesPage = () => {
               </div>
             </div>
           ))}
-          {types.length === 0 && <div className="text-center py-16 text-slate-400 font-bold italic">Типы не заданы</div>}
+          {types.length === 0 && <div className="text-center py-16 text-slate-400 font-bold italic">{t('Типы не заданы')}</div>}
         </div>
       </div>
     </div>
