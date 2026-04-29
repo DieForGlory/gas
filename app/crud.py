@@ -7,6 +7,7 @@ from . import models, schemas
 from app.core.security import get_password_hash
 from .models import Role, Subscriber, Device, District, User
 from typing import Optional, List
+from sqlalchemy import or_
 
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(
@@ -54,9 +55,20 @@ def get_devices(db: Session, user: User, skip: int = 0, limit: int = 100):
     query = apply_access_scope(query, user, Device)
     return query.offset(skip).limit(limit).all()
 
-def get_subscribers(db: Session, user: User, skip: int = 0, limit: int = 100):
+
+def get_subscribers(db: Session, user: User, skip: int = 0, limit: int = 100, search: str = None):
     query = db.query(Subscriber)
     query = apply_access_scope(query, user, Subscriber)
+
+    if search:
+        query = query.filter(
+            or_(
+                Subscriber.account_number.ilike(f"%{search}%"),
+                Subscriber.name.ilike(f"%{search}%"),
+                Subscriber.address.ilike(f"%{search}%"),
+                Subscriber.inn.ilike(f"%{search}%")  # Добавлено
+            )
+        )
     return query.offset(skip).limit(limit).all()
 
 

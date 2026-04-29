@@ -351,7 +351,8 @@ def search_subscribers(
             or_(
                 models.Subscriber.account_number.ilike(f"%{query}%"),
                 models.Subscriber.name.ilike(f"%{query}%"),
-                models.Subscriber.address.ilike(f"%{query}%")
+                models.Subscriber.address.ilike(f"%{query}%"),
+                models.Subscriber.inn.ilike(f"%{query}%")  # Добавлен поиск по ИНН
             )
         )
 

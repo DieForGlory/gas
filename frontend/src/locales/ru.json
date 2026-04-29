@@ -24,7 +24,7 @@
   "new_password": "Новый пароль",
   "save_password": "Сохранить пароль",
 
-  "search_placeholder": "Л/С или ФИО...",
+  "search_placeholder": "Поиск по л/счету, имени, адресу или ИНН...",
   "all_regions": "Все филиалы",
   "all_districts": "Все районы",
   "any_status": "Любой статус",
