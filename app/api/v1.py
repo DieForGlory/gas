@@ -432,6 +432,11 @@ def update_subscriber(
         raise HTTPException(status_code=404, detail="Абонент не найден")
 
     update_data = payload.model_dump(exclude_unset=True)
+
+    if "contract_status" in update_data and update_data["contract_status"] != subscriber.contract_status:
+        if user.role != models.Role.SUPER_ADMIN:
+            raise HTTPException(status_code=403, detail="Только SUPER_ADMIN может изменять статус")
+
     for key, value in update_data.items():
         setattr(subscriber, key, value)
 

@@ -28,7 +28,7 @@ def create_user(db: Session, user: schemas.UserCreate):
         return None
 
 def apply_access_scope(query, user, model):
-    if user.role == models.Role.ADMIN:
+    if user.role in [models.Role.ADMIN, models.Role.SUPER_ADMIN]:
         return query
 
     if model == models.Subscriber:

@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { subscriberService } from '../../services/api';
 import { Save, Building2, MapPin, User, Phone, FileText, AlertCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next'; // Добавлен импорт
+import { useTranslation } from 'react-i18next';
 
 const SubscriberSettings = () => {
-  const { t } = useTranslation(); // Инициализация
+  const { t } = useTranslation();
   const { subscriber, refresh } = useOutletContext();
 
   const [formData, setFormData] = useState({
@@ -19,6 +19,21 @@ const SubscriberSettings = () => {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+
+  // Определение роли пользователя из токена для управления доступом к полям
+  const getRole = () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.role;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const role = getRole();
+  const isSuperAdmin = role === 'SUPER_ADMIN';
 
   useEffect(() => {
     if (subscriber) {
@@ -154,21 +169,29 @@ const SubscriberSettings = () => {
           <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">
             {t('Статус обслуживания')}
           </label>
-          <select
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all font-bold text-slate-800 text-sm appearance-none cursor-pointer"
-            value={formData.contract_status}
-            onChange={e => setFormData({...formData, contract_status: e.target.value})}
-          >
-            <option value="ACTIVE">{t('Активен (Виден всем)')}</option>
-            <option value="SUSPENDED">{t('Приостановлен (Скрыт от Level 2/3)')}</option>
-          </select>
+          <div className="relative">
+            <select
+              disabled={!isSuperAdmin}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-all font-bold text-slate-800 text-sm appearance-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              value={formData.contract_status}
+              onChange={e => setFormData({...formData, contract_status: e.target.value})}
+            >
+              <option value="ACTIVE">{t('Активен (Виден всем)')}</option>
+              <option value="SUSPENDED">{t('Приостановлен (Скрыт от Level 2/3)')}</option>
+            </select>
+            {!isSuperAdmin && (
+              <p className="text-[10px] text-rose-400 mt-1 px-1 font-bold uppercase tracking-tight">
+                {t('Изменение статуса доступно только Super Admin')}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="pt-6 flex justify-end">
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-200"
           >
             <Save size={16} />
             {loading ? t('СОХРАНЕНИЕ...') : t('СОХРАНИТЬ ИЗМЕНЕНИЯ')}
