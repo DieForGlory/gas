@@ -1,0 +1,68 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: gas_valves
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+  bot:
+    build: .
+    command: python run_bot.py
+    depends_on:
+      - db
+      - api
+    env_file:
+      - .env
+  emqx:
+    image: emqx/emqx:5.1.0
+    environment:
+      EMQX_NODE_NAME: emqx@node1.emqx.io
+      EMQX_ALLOW_ANONYMOUS: "false"
+      EMQX_AUTH__MNESIA__PASSWORD_HASH: plain
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: "admin123"
+    ports:
+      - "1883:1883"     # MQTT TCP
+      - "8083:8083"     # MQTT WebSocket
+      - "18083:18083"   # EMQX Dashboard
+    volumes:
+      - emqx_data:/opt/emqx/data
+    restart: unless-stopped
+  api:
+    build: .
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/gas_valves
+      - MQTT_BROKER=emqx
+      - MQTT_USER=backend_service
+      - MQTT_PASSWORD=secure_mqtt_pass
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - emqx
+    restart: always
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=https://smartvalve.uz/api/v1
+    depends_on:
+      - api
+  init:
+    build: .
+    depends_on:
+      - db
+      - emqx
+      - api
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/gas_valves
+    command: sh -c "sleep 35 && python init_db.py && python init_emqx.py"
+volumes:
+  pgdata:
+  emqx_data:
