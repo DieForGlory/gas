@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { subscriberService, geoService } from '../services/api';
+import { subscriberService, geoService, deviceService } from '../services/api';
 import SubscriberModal from '../components/SubscriberModal';
 import {
   Search, Plus, Loader2, ChevronLeft, ChevronRight,
-  User, Globe, FilterX, ListFilter
+  User, Globe, FilterX, ListFilter, Trash2, AlertCircle
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next'; // Импортируем хук перевода
+import { useTranslation } from 'react-i18next';
 
 const Dashboard = () => {
   const navigate = useNavigate();

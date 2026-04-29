@@ -33,7 +33,7 @@
   "find": "Найти",
   "add_subscriber": "Добавить абонента",
   "account_number": "Лицевой счет",
-  "full_name": "ФИО / Организация",
+  "full_name": "Наименование организации",
   "branch_district": "Филиал → Район",
   "address": "Адрес объекта",
   "status": "Статус",
@@ -44,7 +44,7 @@
   "phone": "Телефон",
   "balance": "Баланс",
   "devices_count": "Количество устройств",
-
+  "create_button": "Создать",
   "subscribers": "Абоненты",
   "devices": "Устройства",
   "audit_log": "Журнал аудита",

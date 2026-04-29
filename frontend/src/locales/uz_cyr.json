@@ -141,7 +141,7 @@
   "find": "Излаш",
   "add_subscriber": "Абонент қўшиш",
   "account_number": "Шахсий ҳисоб",
-  "full_name": "Ф.И.О / Ташкилот",
+  "full_name": "Корхона номи",
   "branch_district": "Филиал → Туман",
   "address": "Объект манзили",
   "status": "Ҳолат",
@@ -152,7 +152,7 @@
   "phone": "Телефон",
   "balance": "Баланс",
   "devices_count": "Қурилмалар сони",
-
+  "create_button": "Яратиш",
   "subscribers": "Абонентлар",
   "devices": "Қурилмалар",
   "audit_log": "Аудит журнали",

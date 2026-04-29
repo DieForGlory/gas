@@ -96,6 +96,7 @@ export const deviceService = {
     getStatus: (imei) => api.get(`/devices/${imei}/status`),
     update: (imei, data) => api.patch(`/devices/${imei}`, data),
     sendCommand: (imei, cmd) => api.post(`/devices/${imei}/command?command=${cmd}`),
+    delete: (imei) => api.delete(`/devices/${imei}`), // ДОБАВЛЕНО
     resetKey: (imei) => api.post(`/devices/${imei}/reset_key`)
 };
 

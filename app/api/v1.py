@@ -352,7 +352,7 @@ def search_subscribers(
                 models.Subscriber.account_number.ilike(f"%{query}%"),
                 models.Subscriber.name.ilike(f"%{query}%"),
                 models.Subscriber.address.ilike(f"%{query}%"),
-                models.Subscriber.inn.ilike(f"%{query}%")  # Добавлен поиск по ИНН
+                models.Subscriber.inn.ilike(f"%{query}%")  # ПОИСК ПО ИНН
             )
         )
 
@@ -433,7 +433,6 @@ def update_subscriber(
         raise HTTPException(status_code=404, detail="Абонент не найден")
 
     update_data = payload.model_dump(exclude_unset=True)
-
     if "contract_status" in update_data and update_data["contract_status"] != subscriber.contract_status:
         if user.role != models.Role.SUPER_ADMIN:
             raise HTTPException(status_code=403, detail="Только SUPER_ADMIN может изменять статус")
@@ -766,6 +765,7 @@ def get_subscriber_audit(
         .order_by(models.AuditLog.timestamp.desc()) \
         .offset(skip).limit(limit).all()
 
+
 @api_router.post("/mqtt/auth")
 async def emqx_auth(
         clientid: str = Form(default=""),
@@ -773,28 +773,46 @@ async def emqx_auth(
         password: str = Form(default=""),
         db: Session = Depends(get_db)
 ):
+    # Лог для отладки
+    print(f"\n[MQTT AUTH] Запрос от: {username}")
+    print(f"Присланный пароль: {password} (длина: {len(password)})")
+
     if not username or not password:
+        print("Результат: Отказ (пустые учетные данные)")
         raise HTTPException(status_code=401, detail="deny")
 
     if username == settings.MQTT_USER and password == settings.MQTT_PASSWORD:
+        print("Результат: Успех (Служебный вход)")
         return {"result": "allow", "is_superuser": True}
 
     device = crud.get_device(db, username)
-    if not device: raise HTTPException(status_code=401, detail="deny")
-
-    if password == "00000000":
-        if device.auth_status in [models.AuthStatus.NEW, models.AuthStatus.PROVISIONING]:
-            return {"result": "allow", "is_superuser": False}
+    if not device:
+        print(f"Результат: Отказ (IMEI {username} не найден в БД)")
         raise HTTPException(status_code=401, detail="deny")
 
+    print(f"Статус устройства в БД: {device.auth_status}")
+    print(f"Хэш в БД: {device.secret_key_hash}")
+
+    # Логика для заводского пароля
+    if password == "00000000":
+        if device.auth_status in [models.AuthStatus.NEW, models.AuthStatus.PROVISIONING]:
+            print("Результат: Успех (Режим Provisioning)")
+            return {"result": "allow", "is_superuser": False}
+        print("Результат: Отказ (Заводской пароль запрещен в текущем статусе)")
+        raise HTTPException(status_code=401, detail="deny")
+
+    # Проверка основного ключа
     if device.secret_key_hash:
-        # Используем verify_password из вашего app.core.security
-        if verify_password(password, device.secret_key_hash):
+        is_valid = verify_password(password, device.secret_key_hash)
+        print(f"Результат проверки хэша: {'СОВПАЛО' if is_valid else 'НЕ СОВПАЛО'}")
+
+        if is_valid:
             if device.auth_status in [models.AuthStatus.NEW, models.AuthStatus.PROVISIONING]:
                 device.auth_status = models.AuthStatus.ACTIVE
                 db.commit()
             return {"result": "allow", "is_superuser": False}
 
+    print("Результат: Отказ (Неверный пароль)")
     raise HTTPException(status_code=401, detail="deny")
 
 
@@ -919,6 +937,7 @@ def get_all_devices(
 
 
 @api_router.delete("/devices/{imei}")
+@api_router.delete("/devices/{imei}")
 def delete_device(
         imei: str,
         db: Session = Depends(get_db),
@@ -927,6 +946,10 @@ def delete_device(
     device = crud.get_device(db, imei)
     if not device:
         raise HTTPException(status_code=404, detail="Устройство не найдено")
+
+    # УДАЛЕНИЕ ЗАВИСИМЫХ ЛОГОВ ПЕРЕД УДАЛЕНИЕМ УСТРОЙСТВА
+    db.query(models.DeviceTelemetryLog).filter(models.DeviceTelemetryLog.imei == imei).delete()
+
     db.delete(device)
     db.commit()
 

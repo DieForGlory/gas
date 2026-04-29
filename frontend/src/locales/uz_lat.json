@@ -141,7 +141,7 @@
   "find": "Izlash",
   "add_subscriber": "Abonent qo'shish",
   "account_number": "Shaxsiy hisob",
-  "full_name": "F.I.O / Tashkilot",
+  "full_name": "Korxona nomi ",
   "branch_district": "Filial → Tuman",
   "address": "Obyekt manzili",
   "status": "Holat",
@@ -152,7 +152,7 @@
   "phone": "Telefon",
   "balance": "Balans",
   "devices_count": "Qurilmalar soni",
-
+  "create_button": "Yaratish",
   "subscribers": "Abonentlar",
   "devices": "Qurilmalar",
   "audit_log": "Audit jurnali",
