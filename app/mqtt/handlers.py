@@ -76,6 +76,7 @@ async def handle_status_message(payload: str, topic: str, db: Session, mqtt_clie
             except Exception:
                 pass
 
+        await asyncio.sleep(3)
         await asyncio.to_thread(drop_emqx_session)
         return
     if device.auth_status != models.AuthStatus.ACTIVE:
