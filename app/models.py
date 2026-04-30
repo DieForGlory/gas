@@ -100,6 +100,7 @@ class Subscriber(Base):
 class Device(Base):
     __tablename__ = "devices"
 
+    is_key_reset_pending = Column(Boolean, default=False)
     imei = Column(String, primary_key=True, index=True)
     subscriber_account = Column(String, ForeignKey("subscribers.account_number"))
     valve_type = Column(Integer, ForeignKey("valve_types.id"))

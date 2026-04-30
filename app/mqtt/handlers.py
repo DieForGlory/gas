@@ -1,14 +1,21 @@
 import asyncio
 import json
 from datetime import datetime, timezone
+
 from aiomqtt import Client
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
-from app import crud, models
+from sqlalchemy.orm import Session
+import asyncio
+import json
+import base64
+import urllib.request
+from datetime import datetime, timezone
+from app import crud
+from app import models
 from app.core.database import SessionLocal
 from app.models import DeviceTelemetryLog
 from app.schemas import StatusPayload
-
 
 
 def _save_telemetry_sync(imei: str, topic: str, payload_data: dict):
@@ -50,7 +57,27 @@ async def handle_status_message(payload: str, topic: str, db: Session, mqtt_clie
     device = await asyncio.to_thread(crud.get_device, db, imei)
     if not device:
         return
+    if getattr(device, 'is_key_reset_pending', False):
+        await send_command(mqtt_client, imei, json.dumps({"cmd": "RESET_KEY"}, separators=(',', ':')))
 
+        device.is_key_reset_pending = False
+        device.auth_status = models.AuthStatus.PROVISIONING
+        device.secret_key_hash = None
+        device.manual_control = True
+
+        await asyncio.to_thread(db.commit)
+
+        def drop_emqx_session():
+            req = urllib.request.Request(f"http://emqx:18083/api/v5/clients/{imei}", method="DELETE")
+            auth_str = base64.b64encode(b"admin:public").decode("ascii")
+            req.add_header("Authorization", f"Basic {auth_str}")
+            try:
+                urllib.request.urlopen(req, timeout=2)
+            except Exception:
+                pass
+
+        await asyncio.to_thread(drop_emqx_session)
+        return
     if device.auth_status != models.AuthStatus.ACTIVE:
         device.auth_status = models.AuthStatus.ACTIVE
 

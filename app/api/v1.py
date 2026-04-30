@@ -3,6 +3,9 @@ import hashlib
 import json
 import os
 import secrets
+
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
@@ -604,6 +607,11 @@ async def execute_manual_command(
     if not device:
         raise HTTPException(status_code=404, detail="Устройство не найдено")
 
+    # --- ДОБАВЛЕНО: Проверка блокировки ---
+    if getattr(device, 'is_key_reset_pending', False):
+         raise HTTPException(status_code=423, detail="Команды заблокированы. Ожидание ответа для сброса ключа.")
+    # --------------------------------------
+
     readable_cmds = {
         "OPEN": "Открыть клапан",
         "CLOSE": "Закрыть клапан",
@@ -640,31 +648,40 @@ async def reset_device_key(
     if not device:
         raise HTTPException(status_code=404, detail="Устройство не найдено")
 
+    # --- ДОБАВЛЕНО: Установка флага и отправка STATUS вместо немедленного RESET_KEY ---
+    device.is_key_reset_pending = True
+    db.commit()
+
     async with aiomqtt.Client(
             hostname=settings.MQTT_BROKER,
             port=settings.MQTT_PORT,
             username=settings.MQTT_USER,
             password=settings.MQTT_PASSWORD
     ) as client:
-        await send_command(client, imei, json.dumps({"cmd": "RESET_KEY"}, separators=(',', ':')))
+        # Отправляем STATUS для проверки онлайн
+        await send_command(client, imei, "STATUS")
 
-    device.auth_status = models.AuthStatus.PROVISIONING
-    device.secret_key_hash = None
-    device.manual_control = True
+    crud.log_audit(db, operator_id=admin.id, imei=imei, action="Инициация сброса ключей (отправлен STATUS)")
+    # --------------------------------------------------------------------------------
 
-    crud.log_audit(db, operator_id=admin.id, imei=imei, action="Сброс ключей шифрования")
-    db.commit()
+    # Эти действия (удаление сессии, изменение статуса) должны быть перенесены
+    # в обработчик MQTT (app/mqtt/handlers.py), когда придет ответ на STATUS.
+    # Пока закомментируем их здесь, чтобы они не выполнялись немедленно.
 
-    # Удаление сессии в EMQX
-    req = urllib.request.Request(f"http://emqx:18083/api/v5/clients/{imei}", method="DELETE")
-    auth_str = base64.b64encode(b"admin:public").decode("ascii")
-    req.add_header("Authorization", f"Basic {auth_str}")
-    try:
-        urllib.request.urlopen(req, timeout=2)
-    except Exception:
-        pass
+    # device.auth_status = models.AuthStatus.PROVISIONING
+    # device.secret_key_hash = None
+    # device.manual_control = True
+    # db.commit()
 
-    return {"status": "Команда сброса ключей отправлена"}
+    # req = urllib.request.Request(f"http://emqx:18083/api/v5/clients/{imei}", method="DELETE")
+    # auth_str = base64.b64encode(b"admin:public").decode("ascii")
+    # req.add_header("Authorization", f"Basic {auth_str}")
+    # try:
+    #     urllib.request.urlopen(req, timeout=2)
+    # except Exception:
+    #     pass
+
+    return {"status": "Запрос статуса для сброса ключей отправлен"}
 
 
 # --- География и Аудит ---
