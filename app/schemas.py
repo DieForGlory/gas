@@ -77,6 +77,7 @@ class DeviceOut(DeviceCreate):
     battery: Optional[float] = None
     pending_command: Optional[str] = None # <-- Добавленное поле
     model_config = ConfigDict(from_attributes=True)
+    is_key_reset_pending: bool = False
 
 class SubscriberBase(BaseModel):
     name: str

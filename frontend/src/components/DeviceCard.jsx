@@ -25,6 +25,7 @@ const DeviceCard = ({ device, onUpdate }) => {
   const [syncSuccess, setSyncSuccess] = useState({ vType: false, hb: false });
 
   const isOnline = device.is_online;
+  const isKeyResetPending = device.is_key_reset_pending;
 
   const formatTime = (dateStr) => {
     if (!dateStr) return t('Никогда не был в сети');
@@ -64,7 +65,7 @@ const DeviceCard = ({ device, onUpdate }) => {
 
   useEffect(() => {
     let pollTimer;
-    if (device.pending_command || device.state_p === 1) {
+    if (device.pending_command || device.state_p === 1 || isKeyResetPending) {
       pollTimer = setInterval(() => {
         if (onUpdateRef.current) onUpdateRef.current();
       }, 2000);
@@ -72,7 +73,7 @@ const DeviceCard = ({ device, onUpdate }) => {
     return () => {
       if (pollTimer) clearInterval(pollTimer);
     };
-  }, [device.pending_command, device.state_p]);
+  }, [device.pending_command, device.state_p, isKeyResetPending]);
 
   const updateConfig = async (payload) => {
     try {
@@ -152,7 +153,16 @@ const DeviceCard = ({ device, onUpdate }) => {
         </div>
       </div>
 
-      {device.pending_command && (
+      {isKeyResetPending && (
+        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between">
+          <span className="text-xs font-bold text-amber-700">
+            {t('Ожидание устройства для сброса ключа')}
+          </span>
+          <Loader2 size={14} className="text-amber-500 animate-spin" />
+        </div>
+      )}
+
+      {device.pending_command && !isKeyResetPending && (
         <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between">
           <span className="text-xs font-bold text-blue-700">
             {t('Ожидает команду')}
@@ -161,7 +171,7 @@ const DeviceCard = ({ device, onUpdate }) => {
         </div>
       )}
 
-      {device.state_p === 1 && (
+      {device.state_p === 1 && !isKeyResetPending && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between">
           <span className="text-xs font-bold text-amber-700">
             {t('Ожидание нажатия кнопки на устройстве!')}
@@ -182,16 +192,16 @@ const DeviceCard = ({ device, onUpdate }) => {
       <div className="space-y-3 mb-6">
         <div className="flex gap-2">
           <button
-            disabled={loadingCmd === 'OPEN' || !isOnline}
+            disabled={loadingCmd === 'OPEN' || !isOnline || isKeyResetPending}
             onClick={() => sendCommand('OPEN')}
-            className="flex-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-100 text-white font-bold py-3 rounded-2xl shadow-lg shadow-emerald-200/50 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest"
+            className="flex-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-3 rounded-2xl shadow-lg shadow-emerald-200/50 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest"
           >
             {loadingCmd === 'OPEN' ? <Loader2 size={16} className="animate-spin" /> : t('ОТКРЫТЬ')}
           </button>
           <button
-            disabled={loadingCmd === 'CLOSE' || !isOnline}
+            disabled={loadingCmd === 'CLOSE' || !isOnline || isKeyResetPending}
             onClick={() => sendCommand('CLOSE')}
-            className="flex-1 bg-rose-500 hover:bg-rose-600 disabled:bg-slate-100 text-white font-bold py-3 rounded-2xl shadow-lg shadow-rose-200/50 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest"
+            className="flex-1 bg-rose-500 hover:bg-rose-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-3 rounded-2xl shadow-lg shadow-rose-200/50 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest"
           >
             {loadingCmd === 'CLOSE' ? <Loader2 size={16} className="animate-spin" /> : t('ЗАКРЫТЬ')}
           </button>
@@ -199,16 +209,16 @@ const DeviceCard = ({ device, onUpdate }) => {
 
         <div className="flex gap-2">
           <button
-            disabled={loadingCmd === 'STATUS' || !isOnline}
+            disabled={loadingCmd === 'STATUS' || !isOnline || isKeyResetPending}
             onClick={() => sendCommand('STATUS')}
-            className="flex-1 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-100 text-white font-bold py-2.5 rounded-2xl transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest"
+            className="flex-1 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-2.5 rounded-2xl transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest"
           >
             {loadingCmd === 'STATUS' ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />} {t('Статус')}
           </button>
           <button
-            disabled={loadingCmd === 'SERVICE' || !isOnline}
+            disabled={loadingCmd === 'SERVICE' || !isOnline || isKeyResetPending}
             onClick={() => sendCommand('SERVICE')}
-            className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-100 text-white font-bold py-2.5 rounded-2xl transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest"
+            className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-2.5 rounded-2xl transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest"
           >
             {loadingCmd === 'SERVICE' ? <Loader2 size={14} className="animate-spin" /> : <Wrench size={14} />} {t('Сервис')}
           </button>
@@ -236,16 +246,17 @@ const DeviceCard = ({ device, onUpdate }) => {
                 <input
                   type="number"
                   value={hb}
+                  disabled={isKeyResetPending}
                   onChange={(e) => setHb(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm font-bold outline-none focus:border-blue-400 transition-colors"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm font-bold outline-none focus:border-blue-400 disabled:bg-slate-100 transition-colors"
                   placeholder="HB (сек)"
                 />
               </div>
               <button
-                disabled={isHbPending}
+                disabled={isHbPending || isKeyResetPending}
                 onClick={() => updateConfig({ hb_interval: parseInt(hb) })}
                 className={`px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
-                  syncSuccess.hb ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  syncSuccess.hb ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:text-slate-400'
                 }`}
               >
                 {syncSuccess.hb ? <CheckCircle2 size={16} /> : isHbPending ? <Loader2 size={14} className="animate-spin" /> : t('Интервал')}
@@ -257,17 +268,18 @@ const DeviceCard = ({ device, onUpdate }) => {
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <select
                   value={vType}
+                  disabled={isKeyResetPending}
                   onChange={(e) => setVType(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none appearance-none focus:border-blue-400 transition-colors"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none appearance-none focus:border-blue-400 disabled:bg-slate-100 transition-colors"
                 >
                   {valveTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
               <button
-                disabled={isVTypePending}
+                disabled={isVTypePending || isKeyResetPending}
                 onClick={() => updateConfig({ valve_type: parseInt(vType) })}
                 className={`px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${
-                  syncSuccess.vType ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  syncSuccess.vType ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:text-slate-400'
                 }`}
               >
                 {syncSuccess.vType ? <CheckCircle2 size={16} /> : isVTypePending ? <Loader2 size={14} className="animate-spin" /> : t('Тип')}
@@ -282,14 +294,16 @@ const DeviceCard = ({ device, onUpdate }) => {
             <input
               type="text"
               value={sim}
+              disabled={isKeyResetPending}
               onChange={(e) => setSim(e.target.value)}
               placeholder={t('SIM номер')}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm font-mono font-bold outline-none focus:border-blue-400 transition-colors"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm font-mono font-bold outline-none focus:border-blue-400 disabled:bg-slate-100 transition-colors"
             />
           </div>
           <button
+            disabled={isKeyResetPending}
             onClick={() => updateConfig({ sim_number: sim })}
-            className="px-3 text-[10px] uppercase tracking-widest bg-slate-100 text-slate-600 font-black rounded-xl hover:bg-slate-200"
+            className="px-3 text-[10px] uppercase tracking-widest bg-slate-100 text-slate-600 font-black rounded-xl hover:bg-slate-200 disabled:text-slate-400"
           >
             {t('Обновить SIM')}
           </button>
@@ -298,20 +312,23 @@ const DeviceCard = ({ device, onUpdate }) => {
         {isSuperAdmin && (
           <div className="space-y-2 mt-4">
             <button
+              disabled={isKeyResetPending}
               onClick={async () => {
                 if (window.confirm(t('Сбросить ключи шифрования для этого устройства?'))) {
                   await deviceService.resetKey(device.imei);
                   onUpdate();
                 }
               }}
-              className="w-full flex items-center justify-center gap-2 py-2 text-[10px] font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors uppercase tracking-widest border border-amber-200"
+              className="w-full flex items-center justify-center gap-2 py-2 text-[10px] font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors uppercase tracking-widest border border-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <RefreshCcw size={12} /> {t('Сброс ключей')}
+              {isKeyResetPending ? <Loader2 size={12} className="animate-spin" /> : <RefreshCcw size={12} />}
+              {isKeyResetPending ? t('Ожидание сброса...') : t('Сброс ключей')}
             </button>
 
             <button
+              disabled={isKeyResetPending}
               onClick={handleDeleteDevice}
-              className="w-full flex items-center justify-center gap-2 py-2 text-[10px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors uppercase tracking-widest border border-rose-200"
+              className="w-full flex items-center justify-center gap-2 py-2 text-[10px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors uppercase tracking-widest border border-rose-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Trash2 size={12} /> {t('Удалить устройство')}
             </button>
